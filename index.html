@@ -3,80 +3,61 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Mon Potager Pro</title>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#2e7d32">
+  <title>Potager Automatisé</title>
   <style>
-    :root { --primary: #2e7d32; --primary-light: #e8f5e9; --accent: #4caf50; --danger: #d32f2f; --bg: #f4f9f4; --warn: #ff9800; }
-    body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--bg); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-    
-    nav { background: var(--primary); color: white; padding: 15px; text-align: center; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1000; flex-shrink: 0; }
+    :root { 
+      --primary: #2e7d32; --primary-dark: #1b5e20; --primary-light: #f1f8e9; 
+      --accent: #8bc34a; --danger: #ef5350; --bg: #fafdfa; --text: #2c3e50;
+      --radius: 12px; --shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    nav { background: var(--primary-dark); color: white; padding: 18px; text-align: center; font-weight: 700; text-transform: uppercase; z-index: 1000; }
     
     .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
-    
-    .sidebar { width: 260px; background: white; border-right: 1px solid #ddd; padding: 10px; overflow-y: auto; flex-shrink: 0; transition: transform 0.3s ease; z-index: 999; display: flex; flex-direction: column; }
-    @media (max-width: 600px) {
-      .sidebar { position: absolute; left: 0; top: 0; bottom: 0; transform: translateX(-100%); box-shadow: 5px 0 15px rgba(0,0,0,0.1); }
-      .sidebar.open { transform: translateX(0); }
-    }
-    .side-group-header { padding: 12px; background: #f8f8f8; cursor: pointer; font-weight: bold; font-size: 0.8em; display: flex; justify-content: space-between; border-radius: 5px; margin-top: 10px; border: 1px solid #eee; }
-    .side-group-content.hidden { display: none; }
-
-    .fab { position: fixed; color: white; border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1001; cursor: pointer; }
-    #menu-toggle { bottom: 20px; left: 20px; background: var(--primary); width: 56px; height: 56px; font-size: 24px; display: none; }
-    #add-btn { bottom: 20px; right: 20px; background: var(--accent); width: 60px; height: 60px; font-size: 30px; }
-    @media (max-width: 600px) { #menu-toggle { display: flex; } }
-
-    .content-area { flex: 1; overflow-y: auto; padding: 15px; }
-    .section { display: none; max-width: 800px; margin: 0 auto; }
+    .content-area { flex: 1; overflow-y: auto; padding: 20px; }
+    .section { display: none; max-width: 700px; margin: 0 auto; }
     .section.active { display: block; }
 
-    .zone-box { background: white; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 8px solid var(--primary); padding: 15px; }
-    .plante-card { background: #fff; border: 1px solid #eee; margin: 10px 0; padding: 15px; border-radius: 8px; cursor: pointer; }
+    /* FORMULAIRE */
+    form { background: white; padding: 25px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 80px; }
+    label { font-weight: 700; display: block; margin-top: 15px; margin-bottom: 5px; font-size: 0.9em; }
+    input, select { width: 100%; padding: 12px; border: 2px solid #edf2f7; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
     
-    .badge { background: var(--primary-light); color: var(--primary); padding: 3px 10px; border-radius: 12px; font-size: 0.75em; margin-right: 5px; font-weight: bold; display: inline-block; margin-top: 4px; }
-    .status-badge { float: right; font-size: 0.65em; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; font-weight: bold;}
+    .row { display: flex; gap: 15px; margin-bottom: 10px; flex-wrap: wrap; }
+    .col { flex: 1; min-width: 140px; }
+
+    /* STATUTS */
+    .status-selector { display: flex; gap: 10px; margin-bottom: 20px; }
+    .status-opt { flex: 1; padding: 15px; border-radius: 8px; text-align: center; cursor: pointer; border: 2px solid #edf2f7; font-weight: 600; transition: 0.2s; }
+    .status-opt.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+    /* GRILLE MOIS */
+    .mois-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; background: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; }
+    .mois-item { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9em; }
+    .mois-item input { width: 18px; height: 18px; accent-color: var(--primary); }
+
+    /* BADGES LISTE */
+    .plante-card { background: white; border: 1px solid #f0f4f8; margin: 10px 0; padding: 15px; border-radius: var(--radius); cursor: pointer; transition: 0.2s; position: relative; }
+    .status-badge { float: right; font-size: 0.7em; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; font-weight: 800; }
     .st-semis { background: #e3f2fd; color: #1565c0; }
     .st-sortis { background: #f1f8e9; color: #33691e; }
-    .st-planter { background: #e8f5e9; color: #2e7d32; border: 1px solid #2e7d32; }
-    .st-arracher { background: #fafafa; color: #757575; text-decoration: line-through; }
+    .st-planter { background: #fff3e0; color: #e65100; }
+    .st-recolte { background: #e8f5e9; color: #2e7d32; border: 1px solid #2e7d32; animation: pulse 2s infinite; }
+    .st-arracher { background: #f1f5f9; color: #94a3b8; text-decoration: line-through; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
-    form { background: white; padding: 20px; border-radius: 12px; padding-bottom: 100px; }
-    label { font-weight: bold; display: block; margin-top: 15px; margin-bottom: 5px; color: #444; }
-    input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-    
-    .status-selector { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
-    .status-opt { border: 1px solid #ccc; padding: 10px; border-radius: 8px; text-align: center; cursor: pointer; font-size: 0.9em; transition: 0.2s; }
-    .status-opt.active { background: var(--primary); color: white; border-color: var(--primary); font-weight: bold;}
-
-    .btn-save { background: var(--primary); color: white; border: none; padding: 16px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 25px; font-size: 1.1em; }
-    .btn-duplicate { background: #2196f3; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; margin-top: 10px; cursor: pointer; font-weight: bold; }
-    .btn-delete { background: white; color: var(--danger); border: 2px solid var(--danger); padding: 12px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 15px; }
-    
-    .cat-link { display: block; padding: 12px; color: #333; text-decoration: none; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
-    .sidebar-footer { margin-top: auto; padding-top: 20px; border-top: 1px solid #eee; }
-    .btn-sync { width: 100%; padding: 10px; margin-bottom: 8px; background: #fff; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; font-size: 0.8em; }
+    .btn-save { background: var(--primary); color: white; border: none; padding: 18px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: 700; margin-top: 25px; font-size: 1.1em; }
+    .fab { position: fixed; bottom: 25px; right: 25px; background: var(--accent); color: white; border: none; border-radius: 50%; width: 64px; height: 64px; font-size: 32px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
   </style>
 </head>
 <body>
 
-<nav id="app-title">MON POTAGER</nav>
+<nav>Mon Potager</nav>
 
-<button id="menu-toggle" class="fab" onclick="toggleSidebar()">☰</button>
 <button id="add-btn" class="fab" onclick="ouvrirAjout()">+</button>
 
 <div class="main-container">
-  <aside id="sidebar" class="sidebar">
-    <div style="font-weight:bold; color:var(--primary); margin-bottom:10px;">FILTRES</div>
-    <a class="cat-link" style="background:var(--primary-light); font-weight:bold; border-radius:8px;" onclick="filtrer('tout', null)">📋 TOUT AFFICHER</a>
-    <div id="sidebar-content"></div>
-    <div class="sidebar-footer">
-        <button class="btn-sync" onclick="exporterDonnees()">📥 Exporter (Backup)</button>
-        <button class="btn-sync" onclick="document.getElementById('fileInput').click()">📤 Importer</button>
-        <input type="file" id="fileInput" style="display:none" onchange="importerDonnees(event)">
-    </div>
-  </aside>
-
   <main class="content-area">
     <div id="tab-liste" class="section active"><div id="affichageDonnees"></div></div>
 
@@ -84,40 +65,37 @@
       <form id="potagerForm">
         <input type="hidden" id="edit-id">
         
-        <label>Statut Actuel *</label>
-        <div class="status-selector" id="statusGroup">
-            <div class="status-opt" data-val="semis" onclick="selectStatus(this)">Semis</div>
-            <div class="status-opt" data-val="sortis" onclick="selectStatus(this)">Semis sortis</div>
-            <div class="status-opt" data-val="planter" onclick="selectStatus(this)">Planté</div>
-            <div class="status-opt" data-val="arracher" onclick="selectStatus(this)">Arraché</div>
+        <div id="creation-only">
+            <label>Action initiale *</label>
+            <div class="status-selector">
+                <div class="status-opt" data-val="semis" onclick="selectStatus(this)">🌱 Semis</div>
+                <div class="status-opt" data-val="planter" onclick="selectStatus(this)">🚜 Plantation</div>
+            </div>
         </div>
 
-        <label>Plante *</label>
-        <input type="text" id="p_nom" required list="noms-existants" placeholder="Ex: Radis 18 jours">
-        <datalist id="noms-existants"></datalist>
+        <label>Variété</label>
+        <input type="text" id="p_nom" required placeholder="Ex: Courgette Verte">
         
-        <div style="display: flex; gap: 10px;">
-          <div style="flex:1"><label>Zone</label><input type="text" id="p_zone" placeholder="Ex: A"></div>
-          <div style="flex:1"><label>Rang</label><select id="p_rang"></select></div>
+        <div class="row">
+          <div class="col"><label>Zone</label><input type="text" id="p_zone" placeholder="Ex: A"></div>
+          <div class="col"><label>Rang</label><select id="p_rang"></select></div>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-          <div><label>Date début</label><input type="date" id="p_date"></div>
-          <div id="field-levee" style="display:none;"><label style="color:var(--accent)">Date de levée</label><input type="date" id="p_date_levee" onchange="checkAutoLevee(this.value)"></div>
-          <div><label>Date Arrachage</label><input type="date" id="p_date_fin" onchange="checkAutoArrachage(this.value)"></div>
+        <label>Suivi des dates</label>
+        <div class="row">
+          <div class="col"><label>Date début</label><input type="date" id="p_date"></div>
+          <div class="col" id="col-levee"><label>Date de levée</label><input type="date" id="p_date_levee"></div>
+        </div>
+        <div class="row">
+          <div class="col"><label>Début Récolte</label><input type="date" id="p_date_recolte"></div>
+          <div class="col"><label>Date Arrachage</label><input type="date" id="p_date_fin"></div>
         </div>
 
-        <label>Mois de Récolte</label>
-        <div class="mois-grid" id="moisGrid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; background: #fafafa; padding: 12px; border-radius: 8px;"></div>
-
-        <label>Notes & Observations</label>
-        <div id="notesArea"></div>
-        <button type="button" onclick="ajouterChampNote()" style="margin-top:10px; width:100%; padding:10px; border:1px dashed #ccc; background:none; border-radius:8px;">+ Ajouter une info</button>
+        <label>Mois de récolte prévus</label>
+        <div id="moisGrid" class="mois-grid"></div>
 
         <button type="button" class="btn-save" onclick="validerFormulaire()">ENREGISTRER</button>
-        <button type="button" id="dup-btn" class="btn-duplicate" style="display:none;" onclick="dupliquerPlante()">DUPLIQUER</button>
-        <button type="button" id="del-btn" class="btn-delete" style="display:none;" onclick="supprimerViaForm()">SUPPRIMER CETTE PLANTE</button>
-        <button type="button" style="width:100%; margin-top:10px; padding:12px; border:none; border-radius:8px; cursor:pointer;" onclick="switchTab('tab-liste')">ANNULER</button>
+        <button type="button" style="width:100%; margin-top:10px; border:none; background:none; color:#94a3b8; cursor:pointer;" onclick="switchTab('tab-liste')">ANNULER</button>
       </form>
     </div>
   </main>
@@ -125,200 +103,102 @@
 
 <script>
 let monPotager = JSON.parse(localStorage.getItem("data_potager")) || [];
-let filtreActuel = { type: 'tout', valeur: null };
 let selectedStatusVal = null;
-const MOIS_NOM = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
+const MOIS_LISTE = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
 
-// --- INIT ---
-const rangSelect = document.getElementById('p_rang');
-for(let i=1; i<=30; i++) { let opt = document.createElement('option'); opt.value = i; opt.innerText = "Rang " + i; rangSelect.appendChild(opt); }
-const grid = document.getElementById('moisGrid');
-MOIS_NOM.forEach(m => grid.innerHTML += `<label style="font-size:0.8em; font-weight:normal;"><input type="checkbox" name="mr" value="${m}"> ${m}</label>`);
+// Init
+for(let i=1; i<=30; i++) { document.getElementById('p_rang').innerHTML += `<option value="${i}">${i}</option>`; }
+MOIS_LISTE.forEach(m => { document.getElementById('moisGrid').innerHTML += `<label class="mois-item"><input type="checkbox" name="mr" value="${m}"><span>${m}</span></label>`; });
 
-// --- LOGIQUE STATUT ---
 function selectStatus(el) {
     document.querySelectorAll('.status-opt').forEach(opt => opt.classList.remove('active'));
     el.classList.add('active');
     selectedStatusVal = el.getAttribute('data-val');
-    
-    // Afficher/Masquer le champ date de levée si statut Semis ou Sortis
-    const fieldLevee = document.getElementById('field-levee');
-    if(selectedStatusVal === 'semis' || selectedStatusVal === 'sortis') {
-        fieldLevee.style.display = 'block';
-    } else {
-        fieldLevee.style.display = 'none';
-    }
+    document.getElementById('col-levee').style.opacity = (selectedStatusVal === 'semis') ? "1" : "0.3";
 }
 
-function checkAutoLevee(dateVal) {
-    if(dateVal && selectedStatusVal === 'semis') {
-        const sortisBtn = document.querySelector('[data-val="sortis"]');
-        selectStatus(sortisBtn);
-    }
-}
-
-function checkAutoArrachage(dateVal) {
-    if(dateVal) {
-        const arracherBtn = document.querySelector('[data-val="arracher"]');
-        selectStatus(arracherBtn);
-    }
-}
-
-// --- NAVIGATION ---
 function switchTab(tabId) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.getElementById(tabId).classList.add('active');
-  if (tabId === 'tab-liste') {
-    if (window.innerWidth <= 600) document.getElementById('menu-toggle').style.display = 'flex';
-    document.getElementById('add-btn').style.display = 'flex';
-    document.getElementById('app-title').innerText = "MON POTAGER";
-    updateSidebar(); afficherPotager();
-  } else {
-    document.getElementById('menu-toggle').style.display = 'none';
-    document.getElementById('add-btn').style.display = 'none';
-    document.getElementById('sidebar').classList.remove('open');
-  }
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    if(tabId === 'tab-liste') afficherPotager();
 }
-
-function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 
 function ouvrirAjout() {
-  document.getElementById('potagerForm').reset();
-  document.getElementById('edit-id').value = "";
-  document.getElementById('notesArea').innerHTML = "";
-  document.getElementById('field-levee').style.display = 'none';
-  selectedStatusVal = null;
-  document.querySelectorAll('.status-opt').forEach(opt => opt.classList.remove('active'));
-  document.getElementById('del-btn').style.display = "none";
-  document.getElementById('dup-btn').style.display = "none";
-  switchTab('tab-saisie');
-  ajouterChampNote();
+    document.getElementById('potagerForm').reset();
+    document.getElementById('edit-id').value = "";
+    document.getElementById('creation-only').style.display = "block";
+    selectedStatusVal = null;
+    document.querySelectorAll('.status-opt').forEach(opt => opt.classList.remove('active'));
+    switchTab('tab-saisie');
 }
-
-// --- DONNÉES ---
-function updateSidebar() {
-  const data = { zones: new Set(), plantes: new Set() };
-  monPotager.forEach(z => { data.zones.add(z.nom); z.rangs.forEach(r => r.plantes.forEach(p => data.plantes.add(p.nom))); });
-  const dl = document.getElementById('noms-existants'); dl.innerHTML = "";
-  Array.from(data.plantes).sort().forEach(n => { let o = document.createElement('option'); o.value = n; dl.appendChild(o); });
-  const container = document.getElementById('sidebar-content'); container.innerHTML = "";
-  const creerAccordéon = (titre, items, type) => {
-    if(items.size === 0) return;
-    const group = document.createElement('div');
-    group.innerHTML = `<div class="side-group-header" onclick="this.nextElementSibling.classList.toggle('hidden')">${titre} <span>▾</span></div>
-                       <div class="side-group-content hidden">${Array.from(items).sort().map(v => `<a class="cat-link" onclick="filtrer('${type}', '${v}')">${v}</a>`).join('')}</div>`;
-    container.appendChild(group);
-  };
-  creerAccordéon("ZONES", data.zones, 'zone');
-  creerAccordéon("LÉGUMES", data.plantes, 'nom');
-}
-
-function filtrer(type, val) { filtreActuel = { type, valeur: val }; if(window.innerWidth <= 600) toggleSidebar(); afficherPotager(); }
 
 function afficherPotager() {
-  const container = document.getElementById('affichageDonnees'); container.innerHTML = "";
-  monPotager.sort((a,b) => a.nom.localeCompare(b.nom)).forEach((zone, zIdx) => {
-    let zoneHtml = "";
-    zone.rangs.sort((a,b) => a.numero - b.numero).forEach((rang, rIdx) => {
-      rang.plantes.forEach((p, pIdx) => {
-        if (filtreActuel.type === 'tout' || (filtreActuel.type === 'nom' && filtreActuel.valeur === p.nom) || (filtreActuel.type === 'zone' && filtreActuel.valeur === zone.nom)) {
-          const stLabel = {semis:'Semis', sortis:'Levé !', planter:'Planté', arracher:'Arraché'}[p.status || 'planter'];
-          zoneHtml += `<div class="plante-card" onclick="preparerEdition(${zIdx},${rIdx},${pIdx})">
-            <span class="status-badge st-${p.status || 'planter'}">${stLabel}</span>
-            <div style="display:flex; justify-content:space-between"><strong>🌱 ${p.nom}</strong> <small>R${rang.numero}</small></div>
-            <div style="margin-top:5px; font-size:0.7em; color:#666;">${p.dateLevee ? 'Levé le : ' + p.dateLevee.split('-').reverse().join('/') : ''}</div>
-            <div style="margin-top:5px">${p.recolte.map(m => `<span class="badge">${m}</span>`).join('')}</div>
-          </div>`;
-        }
-      });
+    const container = document.getElementById('affichageDonnees'); container.innerHTML = "";
+    monPotager.forEach((zone, zIdx) => {
+        let cards = "";
+        zone.rangs.forEach((rang, rIdx) => {
+            rang.plantes.forEach((p, pIdx) => {
+                // LOGIQUE DE STATUT AUTOMATIQUE POUR L'AFFICHAGE
+                let currentStatus = p.status; // Base (semis ou planter)
+                if(p.dateLevee) currentStatus = 'sortis';
+                if(p.dateRecolte) currentStatus = 'recolte';
+                if(p.dateFin) currentStatus = 'arracher';
+
+                const label = {semis:'Semis', sortis:'Levé', planter:'Planté', recolte:'Récolte en cours', arracher:'Arraché'}[currentStatus];
+                
+                cards += `<div class="plante-card" onclick="preparerEdition(${zIdx},${rIdx},${pIdx})">
+                    <span class="status-badge st-${currentStatus}">${label}</span>
+                    <div style="font-weight:700;">${p.nom}</div>
+                    <div style="font-size:0.8em; color:#64748b;">Zone ${zone.nom} • Rang ${rang.numero}</div>
+                </div>`;
+            });
+        });
+        if(cards) container.innerHTML += `<div style="margin-bottom:20px;"><div style="font-weight:800; font-size:0.8em; color:var(--primary); text-transform:uppercase; margin-bottom:10px;">Parcelle ${zone.nom}</div>${cards}</div>`;
     });
-    if(zoneHtml) container.innerHTML += `<div class="zone-box"><h3 style="margin:0 0 10px 0; font-size:0.8em; color:var(--primary)">ZONE ${zone.nom}</h3>${zoneHtml}</div>`;
-  });
 }
 
 function preparerEdition(zIdx, rIdx, pIdx) {
-  const p = monPotager[zIdx].rangs[rIdx].plantes[pIdx];
-  document.getElementById('edit-id').value = p.id;
-  document.getElementById('p_nom').value = p.nom;
-  document.getElementById('p_zone').value = monPotager[zIdx].nom;
-  document.getElementById('p_rang').value = monPotager[zIdx].rangs[rIdx].numero;
-  document.getElementById('p_date').value = (p.date && p.date !== "Non définie") ? p.date : "";
-  document.getElementById('p_date_levee').value = p.dateLevee || "";
-  document.getElementById('p_date_fin').value = (p.dateFin && p.dateFin !== "Non définie") ? p.dateFin : "";
-  document.querySelectorAll('input[name="mr"]').forEach(cb => cb.checked = p.recolte.includes(cb.value));
-  document.getElementById('notesArea').innerHTML = ""; p.notes.forEach(n => ajouterChampNote(n.cat, n.val));
-  
-  selectedStatusVal = p.status || 'planter';
-  document.querySelectorAll('.status-opt').forEach(opt => {
-      opt.classList.toggle('active', opt.getAttribute('data-val') === selectedStatusVal);
-  });
-  
-  // Afficher le champ levée si nécessaire
-  document.getElementById('field-levee').style.display = (selectedStatusVal === 'semis' || selectedStatusVal === 'sortis') ? 'block' : 'none';
-
-  document.getElementById('del-btn').style.display = "block";
-  document.getElementById('dup-btn').style.display = "block";
-  switchTab('tab-saisie');
+    const p = monPotager[zIdx].rangs[rIdx].plantes[pIdx];
+    ouvrirAjout();
+    document.getElementById('edit-id').value = p.id;
+    document.getElementById('creation-only').style.display = "none"; // MASQUÉ EN ÉDITION
+    document.getElementById('p_nom').value = p.nom;
+    document.getElementById('p_zone').value = monPotager[zIdx].nom;
+    document.getElementById('p_rang').value = monPotager[zIdx].rangs[rIdx].numero;
+    document.getElementById('p_date').value = p.date || "";
+    document.getElementById('p_date_levee').value = p.dateLevee || "";
+    document.getElementById('p_date_recolte').value = p.dateRecolte || "";
+    document.getElementById('p_date_fin').value = p.dateFin || "";
+    selectedStatusVal = p.status; // On garde le statut d'origine en mémoire
+    switchTab('tab-saisie');
 }
 
 function validerFormulaire() {
-  const nom = document.getElementById('p_nom').value.trim();
-  if(!nom || !selectedStatusVal) { alert("Nom et Statut obligatoires !"); return; }
-  
-  const editId = document.getElementById('edit-id').value;
-  const notes = []; document.querySelectorAll('.note-row').forEach(r => {
-    const c = r.querySelector('.note-cat').value.trim(); const v = r.querySelector('.note-val').value.trim();
-    if(c || v) notes.push({cat:c, val:v});
-  });
+    const nom = document.getElementById('p_nom').value;
+    const isEdit = document.getElementById('edit-id').value !== "";
+    if(!nom || (!isEdit && !selectedStatusVal)) return alert("Nom et Statut requis");
 
-  const plante = { 
-      id: editId ? parseInt(editId) : Date.now(), 
-      nom, 
-      status: selectedStatusVal,
-      date: document.getElementById('p_date').value || "Non définie",
-      dateLevee: document.getElementById('p_date_levee').value || null,
-      dateFin: document.getElementById('p_date_fin').value || "Non définie", 
-      recolte: Array.from(document.querySelectorAll('input[name="mr"]:checked')).map(cb => cb.value), 
-      notes 
-  };
+    const p = {
+        id: parseInt(document.getElementById('edit-id').value) || Date.now(),
+        nom: nom,
+        status: selectedStatusVal, // Semis ou Planter (choisi à la création)
+        date: document.getElementById('p_date').value,
+        dateLevee: document.getElementById('p_date_levee').value,
+        dateRecolte: document.getElementById('p_date_recolte').value,
+        dateFin: document.getElementById('p_date_fin').value,
+        recolte: Array.from(document.querySelectorAll('input[name="mr"]:checked')).map(cb => cb.value)
+    };
 
-  const zNom = document.getElementById('p_zone').value.trim().toUpperCase() || "A";
-  const rNum = document.getElementById('p_rang').value;
-  monPotager.forEach(z => z.rangs.forEach(r => r.plantes = r.plantes.filter(p => p.id !== plante.id)));
-  let z = monPotager.find(z => z.nom === zNom); if(!z) { z = {nom:zNom, rangs:[]}; monPotager.push(z); }
-  let r = z.rangs.find(r => r.numero === rNum); if(!r) { r = {numero:rNum, plantes:[]}; z.rangs.push(r); }
-  r.plantes.push(plante);
-  sauvegarder(); switchTab('tab-liste');
+    const zN = document.getElementById('p_zone').value.toUpperCase() || "A", rN = document.getElementById('p_rang').value;
+    monPotager.forEach(z => z.rangs.forEach(r => r.plantes = r.plantes.filter(x => x.id !== p.id)));
+    let z = monPotager.find(x => x.nom === zN); if(!z) { z = {nom:zN, rangs:[]}; monPotager.push(z); }
+    let r = z.rangs.find(x => x.numero === rN); if(!r) { r = {numero:rN, plantes:[]}; z.rangs.push(r); }
+    r.plantes.push(p);
+    localStorage.setItem("data_potager", JSON.stringify(monPotager));
+    switchTab('tab-liste');
 }
 
-function dupliquerPlante() { document.getElementById('edit-id').value = ""; validerFormulaire(); }
-function supprimerViaForm() {
-  const id = parseInt(document.getElementById('edit-id').value);
-  if(id && confirm("Supprimer définitivement cette plante ?")) {
-    monPotager.forEach(z => z.rangs.forEach(r => r.plantes = r.plantes.filter(p => p.id !== id)));
-    sauvegarder(); switchTab('tab-liste');
-  }
-}
-function ajouterChampNote(c="", v="") {
-  const d = document.createElement('div'); d.className='note-row'; d.style.display="flex"; d.style.gap="5px"; d.style.marginTop="5px";
-  d.innerHTML = `<input type="text" class="note-cat" placeholder="Titre" style="flex:1" value="${c}"><input type="text" class="note-val" placeholder="Note" style="flex:2" value="${v}"><button type="button" onclick="this.parentElement.remove()" style="color:red; background:none; border:none; font-size:20px;">×</button>`;
-  document.getElementById('notesArea').appendChild(d);
-}
-function sauvegarder() {
-  monPotager = monPotager.filter(z => { z.rangs = z.rangs.filter(r => r.plantes.length > 0); return z.rangs.length > 0; });
-  localStorage.setItem("data_potager", JSON.stringify(monPotager));
-}
-function exporterDonnees() {
-  const blob = new Blob([JSON.stringify(monPotager, null, 2)], {type: "application/json"});
-  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "potager.json"; a.click();
-}
-function importerDonnees(event) {
-  const reader = new FileReader();
-  reader.onload = (e) => { try { monPotager = JSON.parse(e.target.result); sauvegarder(); location.reload(); } catch(err){alert("Fichier non valide");} };
-  reader.readAsText(event.target.files[0]);
-}
-if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
-updateSidebar(); afficherPotager();
+afficherPotager();
 </script>
 </body>
 </html>
