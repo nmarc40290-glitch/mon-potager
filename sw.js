@@ -1,10 +1,15 @@
-const CACHE_NAME = 'potager-cache-v1';
-const urlsToCache = ['index.html', 'manifest.json'];
+const CACHE_NAME = 'potager-v2'; // Change ce nom à chaque grosse mise à jour
 
-self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)));
+// Installation : on met en cache pour le mode hors-ligne
+self.addEventListener('install', (e) => {
+  self.skipWaiting(); // Force le nouveau SW à s'activer tout de suite
 });
 
-self.addEventListener('fetch', event => {
-  event.respondWith(caches.match(event.request).then(response => response || fetch(event.request)));
+// Stratégie : On cherche sur le réseau d'abord, sinon on prend le cache
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    fetch(event.request).catch(() => {
+      return caches.match(event.request);
+    })
+  );
 });
