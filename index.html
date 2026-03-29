@@ -185,43 +185,64 @@ function afficherPotager() {
     });
 }
 
-// --- PLANNING ---
+// --- PLANNING (CORRIGÉ POUR LE MOIS EN COURS) ---
 function genererPlanning() {
     let minYear = TODAY.getFullYear();
-    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => { if(p.date) { let y = new Date(p.date).getFullYear(); if(y < minYear) minYear = y; } })));
+    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => { 
+        if(p.date) { let y = new Date(p.date).getFullYear(); if(y < minYear) minYear = y; } 
+    })));
     let maxYear = TODAY.getFullYear() + 1;
-    const hY = document.getElementById('p-years'); const hM = document.getElementById('p-months'); const body = document.getElementById('p-body');
-    hY.innerHTML = hM.innerHTML = '<th class="col-nom">Légume</th>'; body.innerHTML = "";
+    const hY = document.getElementById('p-years'); 
+    const hM = document.getElementById('p-months'); 
+    const body = document.getElementById('p-body');
+    
+    hY.innerHTML = hM.innerHTML = '<th class="col-nom">Légume</th>'; 
+    body.innerHTML = "";
     
     for(let y = minYear; y <= maxYear; y++) {
         hY.innerHTML += `<th colspan="12" style="background:#333; color:white;">${y}</th>`;
         MOIS_NOM.forEach((m, i) => {
-            let cur = (y==TODAY.getFullYear() && i==TODAY.getMonth()) ? 'style="border:2px solid red !important;"' : '';
-            hM.innerHTML += `<th ${cur}>${m}</th>`;
+            let isCurrentMonth = (y == TODAY.getFullYear() && i == TODAY.getMonth());
+            let curStyle = isCurrentMonth ? 'style="border:2px solid red !important; background:#fff0f0;"' : '';
+            hM.innerHTML += `<th ${curStyle}>${m}</th>`;
         });
     }
 
     let flat = []; 
     monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => flat.push({...p, zone:z.nom, rNum:r.numero}))));
     flat.sort((a,b) => a.nom.localeCompare(b.nom)).forEach(p => {
-        let row = `<tr><td class="col-nom">${p.nom} <small>(Z:${p.zone} R:${p.rNum})</small></td>`;
+        let row = `<tr><td class="col-nom">${p.nom} <br><small>(Z:${p.zone} R:${p.rNum})</small></td>`;
         for(let y = minYear; y <= maxYear; y++) {
             MOIS_NOM.forEach((m, mi) => {
+                // On calcule pour le dernier jour du mois en question
                 const dateMoisFin = new Date(y, mi + 1, 0);
                 const st = calculerStatutUnique(p, dateMoisFin);
-                const aDemarre = p.date && dateMoisFin >= new Date(p.date);
+                
+                // Prévisionnel : si le mois est coché ET que la plante a commencé (ou commence ce mois-ci)
+                const aDemarre = p.date && new Date(p.date) <= dateMoisFin;
                 const isPrev = p.recolte && p.recolte.includes(m) && aDemarre;
                 
                 let bars = "";
+                // Affichage du prévisionnel (Orange)
                 if (isPrev) bars += `<div class="bar bg-prev"></div>`;
-                if (st && (dateMoisFin <= TODAY || st === 'arracher')) bars += `<div class="bar bg-${st}"></div>`;
+                
+                // Affichage du statut réel (Couleurs) : on l'affiche si c'est passé OU si c'est le mois en cours
+                if (st) {
+                    const isPastOrPresent = (y < TODAY.getFullYear()) || 
+                                            (y == TODAY.getFullYear() && mi <= TODAY.getMonth()) ||
+                                            (st === 'arracher'); // Toujours afficher la fin
+                    
+                    if (isPastOrPresent) {
+                        bars += `<div class="bar bg-${st}"></div>`;
+                    }
+                }
+                
                 row += `<td>${bars}</td>`;
             });
         }
         body.innerHTML += row + "</tr>";
     });
 }
-
 // --- CRUD ---
 function validerFormulaire() {
     const nom = document.getElementById('p_nom').value; if(!nom) return;
