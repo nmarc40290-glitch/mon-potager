@@ -46,12 +46,10 @@
     label { font-weight: bold; display: block; margin-top: 15px; margin-bottom: 5px; color: #444; }
     input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
     
-    /* STYLE DES STATUTS (CRÉATION UNIQUEMENT) */
     .status-selector { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
     .status-opt { border: 1px solid #ccc; padding: 10px; border-radius: 8px; text-align: center; cursor: pointer; font-size: 0.9em; transition: 0.2s; }
     .status-opt.active { background: var(--primary); color: white; border-color: var(--primary); font-weight: bold;}
 
-    /* STYLE DE LA GRILLE DES MOIS (CORRIGÉ) */
     .mois-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; background: #f9f9f9; padding: 15px; border-radius: 10px; border: 1px solid #eee; }
     .mois-item { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85em; font-weight: normal; }
     .mois-item input { width: 18px; height: 18px; margin: 0; accent-color: var(--primary); }
@@ -91,10 +89,9 @@
       <form id="potagerForm">
         <input type="hidden" id="edit-id">
         
-        <!-- MASQUÉ EN ÉDITION, VISIBLE EN CRÉATION -->
         <div id="creation-only-status">
             <label>Type de démarrage *</label>
-            <div class="status-selector" id="statusGroup">
+            <div class="status-selector">
                 <div class="status-opt" data-val="semis" onclick="selectStatus(this)">🌱 Semis</div>
                 <div class="status-opt" data-val="planter" onclick="selectStatus(this)">🚜 Plantation</div>
             </div>
@@ -111,8 +108,9 @@
 
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
           <div><label>Date début</label><input type="date" id="p_date"></div>
-          <div id="field-levee"><label style="color:var(--accent)">Date de levée</label><input type="date" id="p_date_levee"></div>
+          <div id="field-levee" style="display:none;"><label style="color:var(--accent)">Date de levée</label><input type="date" id="p_date_levee"></div>
         </div>
+        
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
           <div><label style="color:var(--primary)">Début Récolte</label><input type="date" id="p_date_recolte"></div>
           <div><label>Date Arrachage</label><input type="date" id="p_date_fin"></div>
@@ -141,12 +139,12 @@ let selectedStatusVal = null;
 const MOIS_NOM = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
 
 // --- INIT ---
-const rangSelect = document.getElementById('p_rang');
-for(let i=1; i<=30; i++) { let opt = document.createElement('option'); opt.value = i; opt.innerText = "Rang " + i; rangSelect.appendChild(opt); }
-
-const grid = document.getElementById('moisGrid');
+for(let i=1; i<=30; i++) { 
+    let opt = document.createElement('option'); opt.value = i; opt.innerText = "Rang " + i; 
+    document.getElementById('p_rang').appendChild(opt); 
+}
 MOIS_NOM.forEach(m => {
-    grid.innerHTML += `
+    document.getElementById('moisGrid').innerHTML += `
         <label class="mois-item">
             <input type="checkbox" name="mr" value="${m}">
             <span>${m}</span>
@@ -158,8 +156,7 @@ function selectStatus(el) {
     document.querySelectorAll('.status-opt').forEach(opt => opt.classList.remove('active'));
     el.classList.add('active');
     selectedStatusVal = el.getAttribute('data-val');
-    // On garde l'affichage du champ levée pour les semis
-    document.getElementById('field-levee').style.opacity = (selectedStatusVal === 'semis') ? '1' : '0.3';
+    document.getElementById('field-levee').style.display = (selectedStatusVal === 'semis') ? 'block' : 'none';
 }
 
 // --- NAVIGATION ---
@@ -185,6 +182,7 @@ function ouvrirAjout() {
   document.getElementById('edit-id').value = "";
   document.getElementById('notesArea').innerHTML = "";
   document.getElementById('creation-only-status').style.display = 'block';
+  document.getElementById('field-levee').style.display = 'none';
   selectedStatusVal = null;
   document.querySelectorAll('.status-opt').forEach(opt => opt.classList.remove('active'));
   document.getElementById('del-btn').style.display = "none";
@@ -221,7 +219,6 @@ function afficherPotager() {
       rang.plantes.forEach((p, pIdx) => {
         if (filtreActuel.type === 'tout' || (filtreActuel.type === 'nom' && filtreActuel.valeur === p.nom) || (filtreActuel.type === 'zone' && filtreActuel.valeur === zone.nom)) {
           
-          // --- LOGIQUE DE STATUT DYNAMIQUE POUR L'AFFICHAGE ---
           let st = p.status || 'planter';
           if(p.dateLevee) st = 'sortis';
           if(p.dateRecolte) st = 'recolte';
@@ -234,7 +231,7 @@ function afficherPotager() {
             <div style="display:flex; justify-content:space-between"><strong>🌱 ${p.nom}</strong> <small>R${rang.numero}</small></div>
             <div style="margin-top:5px; font-size:0.7em; color:#666;">
                 ${p.dateLevee ? 'Levé le : ' + p.dateLevee.split('-').reverse().join('/') : ''}
-                ${p.dateRecolte ? ' • Récolte dès le : ' + p.dateRecolte.split('-').reverse().join('/') : ''}
+                ${p.dateRecolte ? ' • Récolte dès : ' + p.dateRecolte.split('-').reverse().join('/') : ''}
             </div>
             <div style="margin-top:5px">${p.recolte.map(m => `<span class="badge">${m}</span>`).join('')}</div>
           </div>`;
@@ -258,8 +255,8 @@ function preparerEdition(zIdx, rIdx, pIdx) {
   document.querySelectorAll('input[name="mr"]').forEach(cb => cb.checked = p.recolte.includes(cb.value));
   document.getElementById('notesArea').innerHTML = ""; p.notes.forEach(n => ajouterChampNote(n.cat, n.val));
   
-  // CACHER les boutons de statuts en mode édition
   document.getElementById('creation-only-status').style.display = 'none';
+  document.getElementById('field-levee').style.display = (p.status === 'semis' || p.status === 'sortis') ? 'block' : 'none';
   selectedStatusVal = p.status; 
 
   document.getElementById('del-btn').style.display = "block";
@@ -270,8 +267,7 @@ function preparerEdition(zIdx, rIdx, pIdx) {
 function validerFormulaire() {
   const nom = document.getElementById('p_nom').value.trim();
   const editId = document.getElementById('edit-id').value;
-  
-  if(!nom || (!editId && !selectedStatusVal)) { alert("Nom obligatoire !"); return; }
+  if(!nom || (!editId && !selectedStatusVal)) { alert("Nom et Type requis !"); return; }
   
   const notes = []; document.querySelectorAll('.note-row').forEach(r => {
     const c = r.querySelector('.note-cat').value.trim(); const v = r.querySelector('.note-val').value.trim();
@@ -281,7 +277,7 @@ function validerFormulaire() {
   const plante = { 
       id: editId ? parseInt(editId) : Date.now(), 
       nom, 
-      status: selectedStatusVal, // Stocke le type de départ (semis ou plantation)
+      status: selectedStatusVal,
       date: document.getElementById('p_date').value || "Non définie",
       dateLevee: document.getElementById('p_date_levee').value || null,
       dateRecolte: document.getElementById('p_date_recolte').value || null,
