@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Mon Potager Pro</title>
+  <title>Mon Potager Pro - Planning Dynamique</title>
   <style>
     :root { 
         --primary: #2e7d32; --primary-light: #e8f5e9; --accent: #4caf50; --danger: #d32f2f; 
         --bg: #f4f9f4; --text: #2c3e50;
-        --c-semis: #2196f3; --c-sortis: #8bc34a; --c-planter: #ff9800; --c-recolte: #1b5e20; --c-prev: #a5d6a7;
+        --c-semis: #2196f3; --c-planter: #ff9800; --c-recolte: #1b5e20; --c-prev: #a5d6a7;
     }
     
     body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--bg); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
@@ -23,22 +23,22 @@
     /* SIDEBAR */
     .sidebar { width: 260px; background: white; border-right: 1px solid #ddd; padding: 15px; overflow-y: auto; position: absolute; left: 0; top: 0; bottom: 0; transform: translateX(-100%); transition: 0.3s; z-index: 1100; box-shadow: 5px 0 15px rgba(0,0,0,0.1); }
     .sidebar.open { transform: translateX(0); }
-    .side-group-header { padding: 10px; background: #f8f8f8; cursor: pointer; font-weight: bold; font-size: 0.8em; display: flex; justify-content: space-between; margin-top: 15px; border-radius: 5px; }
-    .cat-link { display: block; padding: 12px; color: #333; text-decoration: none; border-bottom: 1px solid #f0f0f0; cursor: pointer; font-size: 0.9em; }
-    .sidebar-footer { margin-top: 30px; border-top: 1px solid #eee; padding-top: 15px; }
+    .cat-link { display: block; padding: 10px; color: #333; text-decoration: none; border-bottom: 1px solid #f0f0f0; cursor: pointer; font-size: 0.85em; }
 
     /* VUE PLANNING */
     #tab-planning { width: 100%; overflow-x: auto; background: white; }
-    .planning-table { border-collapse: collapse; min-width: 1200px; width: 100%; table-layout: fixed; }
-    .planning-table th, .planning-table td { border: 1px solid #eee; padding: 10px 2px; text-align: center; }
+    .planning-table { border-collapse: collapse; table-layout: fixed; min-width: 100%; }
+    .planning-table th, .planning-table td { border: 1px solid #eee; padding: 8px 2px; text-align: center; cursor: pointer; }
     .planning-table th { background: #f8f9fa; position: sticky; top: 0; z-index: 10; font-size: 0.7em; }
-    .col-nom { width: 160px; position: sticky; left: 0; background: white; z-index: 11; text-align: left !important; font-weight: bold; border-right: 2px solid var(--primary) !important; font-size: 0.85em; }
-    
-    /* BARRES PLANNING */
-    .bar { height: 14px; border-radius: 4px; width: 95%; margin: 0 auto; position: relative; }
-    .bg-prev { background-color: var(--c-prev); border: 1px dashed var(--primary); height: 8px; }
-    .bg-active { background-color: var(--c-semis); height: 14px; } /* Couleur par défaut si en cours */
-    .bg-recolte-full { background-color: var(--c-recolte); height: 14px; box-shadow: inset 0 0 5px rgba(0,0,0,0.2); }
+    .col-nom { width: 160px !important; position: sticky; left: 0; background: white; z-index: 11; text-align: left !important; font-weight: bold; border-right: 2px solid var(--primary) !important; font-size: 0.8em; }
+    .year-header { background: #444 !important; color: white !important; font-weight: bold; }
+
+    /* BARRES */
+    .bar { height: 12px; border-radius: 3px; width: 90%; margin: 2px auto; }
+    .bg-prev { background: repeating-linear-gradient(45deg, var(--c-prev), var(--c-prev) 5px, #fff 5px, #fff 10px); border: 1px solid var(--c-prev); height: 8px; }
+    .bg-reel { background-color: var(--c-semis); }
+    .bg-recolte-reel { background-color: var(--c-recolte); }
+    .current-month { border: 2px solid var(--danger) !important; background: #fff5f5; }
 
     /* CONTENU */
     .content-area { flex: 1; overflow-y: auto; }
@@ -48,29 +48,18 @@
     .plante-card { background: #fff; border: 1px solid #eee; margin: 10px 0; padding: 15px; border-radius: 8px; cursor: pointer; }
     .status-badge { float: right; font-size: 0.6em; padding: 2px 6px; border-radius: 4px; color: white; text-transform: uppercase; font-weight: bold; }
 
-    /* FORMULAIRE */
-    form { background: white; padding: 20px; border-radius: 15px; max-width: 600px; margin: 0 auto 100px auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    label { font-weight: bold; display: block; margin-top: 15px; margin-bottom: 5px; font-size: 0.9em; }
-    input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
-    .mois-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; background: #f9f9f9; padding: 10px; border-radius: 10px; }
-    .mois-item { display: flex; align-items: center; gap: 5px; font-size: 0.8em; }
-
-    .fab-add { position: fixed; bottom: 25px; right: 25px; background: var(--accent); color: white; border: none; border-radius: 50%; width: 65px; height: 65px; font-size: 35px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 1001; display: flex; align-items: center; justify-content: center; }
+    form { background: white; padding: 20px; border-radius: 15px; max-width: 600px; margin: 0 auto 100px auto; }
+    input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 10px; font-size: 16px; }
+    .mois-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; background: #f9f9f9; padding: 10px; border-radius: 10px; }
     
-    .btn-sync { width: 100%; padding: 10px; margin-bottom: 8px; background: #eee; border: none; border-radius: 5px; cursor: pointer; font-size: 0.8em; font-weight: bold; }
-    
-    .st-semis { background: var(--c-semis); }
-    .st-sortis { background: var(--c-sortis); }
-    .st-planter { background: var(--c-planter); }
-    .st-recolte { background: var(--c-recolte); }
-    .st-arracher { background: #9e9e9e; }
+    .fab-add { position: fixed; bottom: 25px; right: 25px; background: var(--accent); color: white; border: none; border-radius: 50%; width: 65px; height: 65px; font-size: 35px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 1001; }
   </style>
 </head>
 <body>
 
 <nav>
     <div onclick="toggleSidebar()" style="cursor:pointer; display:flex; align-items:center; gap:10px;">
-        <span style="font-size:20px">☰</span> <span style="font-weight:900">POTAGER</span>
+        <span>☰</span> <span style="font-weight:900">POTAGER</span>
     </div>
     <div class="nav-btns">
         <button class="nav-btn active" id="btn-list" onclick="switchTab('tab-liste')">Liste</button>
@@ -82,16 +71,12 @@
 
 <div class="main-container">
   <aside id="sidebar" class="sidebar">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-weight:bold; color:var(--primary);">FILTRES</span>
-        <span onclick="toggleSidebar()" style="cursor:pointer; font-size:20px;">×</span>
-    </div>
-    <a class="cat-link" style="background:var(--primary-light); margin-top:10px; border-radius:5px;" onclick="filtrer('tout', null)">📋 Tout afficher</a>
+    <div style="font-weight:bold; color:var(--primary); margin-bottom:15px;">NAVIGATION</div>
+    <a class="cat-link" style="font-weight:bold" onclick="filtrer('tout', null)">📋 TOUT AFFICHER</a>
     <div id="sidebar-content"></div>
-    
-    <div class="sidebar-footer">
-        <button class="btn-sync" onclick="exporterDonnees()">📥 Sauvegarder (JSON)</button>
-        <button class="btn-sync" onclick="document.getElementById('fImport').click()">📤 Restaurer</button>
+    <div style="margin-top:30px; border-top:1px solid #eee; padding-top:15px;">
+        <button style="width:100%; padding:10px; margin-bottom:8px;" onclick="exporterDonnees()">📥 Sauvegarder JSON</button>
+        <button style="width:100%; padding:10px;" onclick="document.getElementById('fImport').click()">📤 Restaurer Import</button>
         <input type="file" id="fImport" style="display:none" onchange="importerDonnees(event)">
     </div>
   </aside>
@@ -100,8 +85,11 @@
     <div id="tab-liste" class="section active"><div id="affichageDonnees"></div></div>
     
     <div id="tab-planning" class="section" style="padding:0;">
-        <table class="planning-table">
-            <thead><tr id="planning-head"><th class="col-nom">Légume (Zone)</th></tr></thead>
+        <table class="planning-table" id="pTable">
+            <thead>
+                <tr id="planning-years"></tr>
+                <tr id="planning-head"></tr>
+            </thead>
             <tbody id="planning-body"></tbody>
         </table>
     </div>
@@ -109,33 +97,20 @@
     <div id="tab-saisie" class="section">
       <form id="potagerForm">
         <input type="hidden" id="edit-id">
-        <div id="creation-only-status">
-            <label>Mode de démarrage *</label>
-            <select id="p_status_init" onchange="selectedStatusVal = this.value; toggleLeveeField();">
-                <option value="">-- Sélectionner --</option>
-                <option value="semis">🌱 Semis (Graine)</option>
-                <option value="planter">🚜 Plantation (Plant)</option>
-            </select>
-        </div>
-        <label>Nom du légume *</label>
-        <input type="text" id="p_nom" required list="noms-existants">
-        <datalist id="noms-existants"></datalist>
-        
+        <div id="creation-only-status"><label>Démarrage</label><select id="p_status_init" onchange="selectedStatusVal = this.value; toggleLeveeField();"><option value="semis">🌱 Semis</option><option value="planter">🚜 Plantation</option></select></div>
+        <label>Légume</label><input type="text" id="p_nom" required list="noms-existants"><datalist id="noms-existants"></datalist>
         <div style="display:flex; gap:10px;">
             <div style="flex:1;"><label>Zone</label><input type="text" id="p_zone" placeholder="A"></div>
             <div style="flex:1;"><label>Rang</label><select id="p_rang"></select></div>
         </div>
-        <div id="field-levee" style="display:none;"><label style="color:var(--accent)">Date de levée effective</label><input type="date" id="p_date_levee"></div>
-        <label>Date mise en terre</label><input type="date" id="p_date">
-        <label style="color:var(--primary)">Date début récolte réelle</label><input type="date" id="p_date_recolte">
-        <label>Mois de récolte prévus (Planning)</label>
-        <div class="mois-grid" id="moisGrid"></div>
-        <label>Date fin / Arrachage</label><input type="date" id="p_date_fin">
-
-        <button type="button" class="btn-save" onclick="validerFormulaire()">ENREGISTRER</button>
-        <button type="button" id="dup-btn" style="background:#2196f3; color:white; border:none; padding:12px; border-radius:8px; width:100%; font-weight:bold; margin-top:10px; cursor:pointer; display:none;" onclick="dupliquerPlante()">DUPLIQUER</button>
-        <button type="button" id="del-btn" style="width:100%; color:red; border:none; background:none; margin-top:15px; cursor:pointer;" onclick="supprimerViaForm()">Supprimer la fiche</button>
-        <button type="button" style="width:100%; border:none; background:none; margin-top:10px; cursor:pointer;" onclick="switchTab('tab-liste')">Annuler</button>
+        <div id="field-levee" style="display:none;"><label>Date levée</label><input type="date" id="p_date_levee"></div>
+        <label>Mise en terre (Réel)</label><input type="date" id="p_date">
+        <label>Début récolte (Réel)</label><input type="date" id="p_date_recolte">
+        <label>Mois de récolte prévus</label><div class="mois-grid" id="moisGrid"></div>
+        <label>Fin / Arrachage</label><input type="date" id="p_date_fin">
+        <button type="button" class="btn-save" onclick="validerFormulaire()" style="background:var(--primary); color:white; width:100%; border:none; padding:15px; border-radius:8px; font-weight:bold; margin-top:20px;">ENREGISTRER</button>
+        <button type="button" id="dup-btn" style="background:#2196f3; color:white; width:100%; border:none; padding:12px; border-radius:8px; margin-top:10px; display:none;" onclick="dupliquerPlante()">DUPLIQUER</button>
+        <button type="button" id="del-btn" style="width:100%; color:red; border:none; background:none; margin-top:10px;" onclick="supprimerViaForm()">Supprimer</button>
       </form>
     </div>
   </main>
@@ -144,18 +119,12 @@
 <script>
 let monPotager = JSON.parse(localStorage.getItem("data_potager")) || [];
 let filtreActuel = { type: 'tout', valeur: null };
-let selectedStatusVal = null;
+let selectedStatusVal = 'semis';
 const MOIS_NOM = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
+const NOW = new Date();
 
-// INIT
-for(let i=1; i<=30; i++) { 
-    let o = document.createElement('option'); o.value=i; o.innerText="Rang "+i; 
-    document.getElementById('p_rang').appendChild(o); 
-}
-MOIS_NOM.forEach((m, idx) => {
-    document.getElementById('planning-head').innerHTML += `<th style="width:80px">${m}</th>`;
-    document.getElementById('moisGrid').innerHTML += `<label class="mois-item"><input type="checkbox" name="mr" value="${m}"> ${m}</label>`;
-});
+for(let i=1; i<=30; i++) { let o=document.createElement('option'); o.value=i; o.innerText="Rang "+i; document.getElementById('p_rang').appendChild(o); }
+MOIS_NOM.forEach(m => document.getElementById('moisGrid').innerHTML += `<label style="display:flex;align-items:center;gap:5px;font-size:0.8em"><input type="checkbox" name="mr" value="${m}"> ${m}</label>`);
 
 function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 function toggleLeveeField() { document.getElementById('field-levee').style.display = (selectedStatusVal === 'semis') ? 'block' : 'none'; }
@@ -165,29 +134,98 @@ function switchTab(tabId) {
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     document.getElementById('sidebar').classList.remove('open');
-    
     if(tabId === 'tab-liste') { document.getElementById('btn-list').classList.add('active'); updateSidebar(); afficherPotager(); }
     if(tabId === 'tab-planning') { document.getElementById('btn-plan').classList.add('active'); générerPlanning(); }
     document.getElementById('add-btn').style.display = (tabId === 'tab-saisie') ? 'none' : 'flex';
 }
 
-function filtrer(type, val) { filtreActuel = { type, valeur: val }; toggleSidebar(); afficherPotager(); }
+function générerPlanning() {
+    // 1. Calculer la plage de dates
+    let minYear = NOW.getFullYear();
+    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
+        if(p.date) { let y = new Date(p.date).getFullYear(); if(y < minYear) minYear = y; }
+    })));
+    let maxYear = NOW.getFullYear() + 1;
+
+    const headYears = document.getElementById('planning-years');
+    const headMonths = document.getElementById('planning-head');
+    const body = document.getElementById('planning-body');
+    
+    headYears.innerHTML = '<th class="col-nom"></th>';
+    headMonths.innerHTML = '<th class="col-nom">Légume (Zone)</th>';
+    body.innerHTML = "";
+
+    // 2. Créer l'entête
+    for(let y = minYear; y <= maxYear; y++) {
+        headYears.innerHTML += `<th colspan="12" class="year-header">${y}</th>`;
+        MOIS_NOM.forEach((m, i) => {
+            let isCurrent = (y === NOW.getFullYear() && i === NOW.getMonth());
+            headMonths.innerHTML += `<th class="${isCurrent ? 'current-month' : ''}" style="width:60px">${m}</th>`;
+        });
+    }
+
+    // 3. Remplir les données
+    let toutes = []; 
+    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => toutes.push({...p, zone: z.nom}))));
+    toutes.sort((a,b) => a.nom.localeCompare(b.nom)).forEach(p => {
+        let row = `<tr><td class="col-nom">${p.nom}<br><small>Z:${p.zone}</small></td>`;
+        for(let y = minYear; y <= maxYear; y++) {
+            MOIS_NOM.forEach((m, mIdx) => {
+                const dateCell = new Date(y, mIdx, 1);
+                const dateNextCell = new Date(y, mIdx + 1, 0);
+                const isPast = dateNextCell < new Date(NOW.getFullYear(), NOW.getMonth(), 1);
+                const isCurrent = (y === NOW.getFullYear() && mIdx === NOW.getMonth());
+                const isFuture = dateCell > new Date(NOW.getFullYear(), NOW.getMonth(), 31);
+
+                const dStart = p.date ? new Date(p.date) : null;
+                const dRecolte = p.dateRecolte ? new Date(p.dateRecolte) : null;
+                const dEnd = (p.dateFin && p.dateFin !== "Non définie") ? new Date(p.dateFin) : null;
+                const isPrevCoche = p.recolte && p.recolte.includes(m) && y === NOW.getFullYear();
+
+                let bars = "";
+                let statusTxt = "Rien";
+
+                // LOGIQUE PASSÉ & PRÉSENT (RÉEL)
+                if (!isFuture) {
+                    if (dRecolte && dateNextCell >= dRecolte && (!dEnd || dateCell <= dEnd)) {
+                        bars += `<div class="bar bg-recolte-reel"></div>`;
+                        statusTxt = "Récolte réelle";
+                    } else if (dStart && dateNextCell >= dStart && (!dEnd || dateCell <= dEnd)) {
+                        bars += `<div class="bar bg-reel"></div>`;
+                        statusTxt = "En terre";
+                    }
+                }
+                // LOGIQUE PRÉSENT & FUTUR (PRÉVISIONNEL)
+                if (isCurrent || isFuture) {
+                    if (isPrevCoche) {
+                        bars += `<div class="bar bg-prev"></div>`;
+                        statusTxt += (statusTxt !== "Rien") ? " + Récolte prévue" : "Récolte prévue";
+                    }
+                }
+
+                row += `<td class="${isCurrent ? 'current-month' : ''}" onclick="alert('${p.nom} - ${m} ${y}\\nStatut : ${statusTxt}')">${bars}</td>`;
+            });
+        }
+        body.innerHTML += row + "</tr>";
+    });
+}
 
 function updateSidebar() {
     const data = { zones: new Set(), plantes: new Set() };
     monPotager.forEach(z => { data.zones.add(z.nom); z.rangs.forEach(r => r.plantes.forEach(p => data.plantes.add(p.nom))); });
-    const dl = document.getElementById('noms-existants'); dl.innerHTML = "";
-    Array.from(data.plantes).sort().forEach(n => { let o = document.createElement('option'); o.value = n; dl.appendChild(o); });
     const container = document.getElementById('sidebar-content'); container.innerHTML = "";
-    const creerAcc = (titre, items, type) => {
-        if(items.size === 0) return;
-        let h = `<div class="side-group-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">${titre} ▾</div><div style="display:none">`;
-        Array.from(items).sort().forEach(v => h += `<a class="cat-link" onclick="filtrer('${type}', '${v}')">${v}</a>`);
-        container.innerHTML += h + `</div>`;
+    const dl = document.getElementById('noms-existants'); dl.innerHTML = "";
+    Array.from(data.plantes).sort().forEach(n => dl.innerHTML += `<option value="${n}">`);
+    
+    const addSection = (titre, items, type) => {
+        container.innerHTML += `<div style="font-size:0.7em; font-weight:bold; margin-top:15px; color:#888;">${titre}</div>`;
+        Array.from(items).sort().forEach(v => container.innerHTML += `<a class="cat-link" onclick="filtrer('${type}', '${v}')">${v}</a>`);
     };
-    creerAcc("PAR ZONE", data.zones, 'zone');
-    creerAcc("PAR LÉGUME", data.plantes, 'nom');
+    addSection("FILTRER PAR ZONE", data.zones, 'zone');
+    addSection("FILTRER PAR LÉGUME", data.plantes, 'nom');
 }
+
+function filtrer(type, val) { filtreActuel = { type, valeur: val }; toggleSidebar(); afficherPotager(); }
 
 function afficherPotager() {
     const container = document.getElementById('affichageDonnees'); container.innerHTML = "";
@@ -196,14 +234,9 @@ function afficherPotager() {
         zone.rangs.forEach((rang, rIdx) => {
             rang.plantes.forEach((p, pIdx) => {
                 if (filtreActuel.type === 'tout' || (filtreActuel.type === 'nom' && filtreActuel.valeur === p.nom) || (filtreActuel.type === 'zone' && filtreActuel.valeur === zone.nom)) {
-                    let st = p.status || 'planter';
-                    if(p.dateLevee) st = 'sortis';
-                    if(p.dateRecolte) st = 'recolte';
+                    let st = p.dateRecolte ? 'recolte' : (p.dateLevee ? 'sortis' : 'semis');
                     if(p.dateFin && p.dateFin !== "Non définie") st = 'arracher';
-                    cards += `<div class="plante-card" onclick="preparerEdition(${zIdx},${rIdx},${pIdx})">
-                        <span class="status-badge st-${st}">${st}</span>
-                        <strong>${p.nom}</strong> <br><small>Zone ${zone.nom} — Rang ${rang.numero}</small>
-                    </div>`;
+                    cards += `<div class="plante-card" onclick="preparerEdition(${zIdx},${rIdx},${pIdx})"><span class="status-badge st-${st}">${st}</span><strong>${p.nom}</strong><br><small>Zone ${zone.nom} - Rang ${rang.numero}</small></div>`;
                 }
             });
         });
@@ -211,52 +244,7 @@ function afficherPotager() {
     });
 }
 
-function générerPlanning() {
-    const body = document.getElementById('planning-body'); body.innerHTML = "";
-    let toutes = []; 
-    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => toutes.push({...p, zone: z.nom}))));
-    
-    toutes.sort((a,b) => a.nom.localeCompare(b.nom)).forEach(p => {
-        let row = `<tr><td class="col-nom">${p.nom}<br><small>Z:${p.zone}</small></td>`;
-        
-        // Extraction des mois de vie réelle
-        const mDebut = p.date ? new Date(p.date).getMonth() : -1;
-        const mRecolte = p.dateRecolte ? new Date(p.dateRecolte).getMonth() : -1;
-        const mFin = (p.dateFin && p.dateFin !== "Non définie") ? new Date(p.dateFin).getMonth() : -1;
-
-        MOIS_NOM.forEach((m, idx) => {
-            let content = "";
-            let colorClass = "";
-            
-            // 1. Priorité Récolte Active (Réelle)
-            if (mRecolte !== -1 && idx >= mRecolte && (mFin === -1 || idx <= mFin)) {
-                colorClass = "bg-recolte-full";
-            } 
-            // 2. Croissance / En cours (Réelle)
-            else if (mDebut !== -1 && idx >= mDebut && (mFin === -1 || idx <= mFin)) {
-                colorClass = "bg-active";
-            }
-            // 3. Prévisionnel (Si coché et pas encore en vie réelle ou après)
-            else if (p.recolte && p.recolte.includes(m)) {
-                colorClass = "bg-prev";
-            }
-
-            if(colorClass) content = `<div class="bar ${colorClass}"></div>`;
-            row += `<td>${content}</td>`;
-        });
-        body.innerHTML += row + `</tr>`;
-    });
-}
-
-function ouvrirAjout() {
-    document.getElementById('potagerForm').reset();
-    document.getElementById('edit-id').value = "";
-    document.getElementById('creation-only-status').style.display = 'block';
-    document.getElementById('dup-btn').style.display = "none";
-    document.getElementById('del-btn').style.display = "none";
-    selectedStatusVal = null; toggleLeveeField();
-    switchTab('tab-saisie');
-}
+function ouvrirAjout() { document.getElementById('potagerForm').reset(); document.getElementById('edit-id').value = ""; document.getElementById('creation-only-status').style.display = 'block'; document.getElementById('dup-btn').style.display = "none"; document.getElementById('del-btn').style.display = "none"; switchTab('tab-saisie'); }
 
 function preparerEdition(zIdx, rIdx, pIdx) {
     const p = monPotager[zIdx].rangs[rIdx].plantes[pIdx];
@@ -268,22 +256,19 @@ function preparerEdition(zIdx, rIdx, pIdx) {
     document.getElementById('p_date').value = p.date || "";
     document.getElementById('p_date_levee').value = p.dateLevee || "";
     document.getElementById('p_date_recolte').value = p.dateRecolte || "";
-    document.getElementById('p_date_fin').value = (p.dateFin === "Non définie") ? "" : p.dateFin;
+    document.getElementById('p_date_fin').value = p.dateFin === "Non définie" ? "" : p.dateFin;
     document.getElementById('creation-only-status').style.display = 'none';
     document.getElementById('dup-btn').style.display = "block";
     document.getElementById('del-btn').style.display = "block";
-    selectedStatusVal = p.status; toggleLeveeField();
     document.querySelectorAll('input[name="mr"]').forEach(cb => cb.checked = p.recolte.includes(cb.value));
 }
 
 function validerFormulaire() {
     const nom = document.getElementById('p_nom').value;
-    const editId = document.getElementById('edit-id').value;
-    if(!nom) return alert("Nom requis");
-
-    const plante = {
-        id: editId ? parseInt(editId) : Date.now(),
-        nom: nom, status: selectedStatusVal,
+    if(!nom) return;
+    const p = {
+        id: document.getElementById('edit-id').value ? parseInt(document.getElementById('edit-id').value) : Date.now(),
+        nom: nom,
         date: document.getElementById('p_date').value,
         dateLevee: document.getElementById('p_date_levee').value,
         dateRecolte: document.getElementById('p_date_recolte').value,
@@ -292,41 +277,18 @@ function validerFormulaire() {
     };
     const zNom = document.getElementById('p_zone').value.toUpperCase() || "A";
     const rNum = document.getElementById('p_rang').value;
-
-    monPotager.forEach(z => z.rangs.forEach(r => r.plantes = r.plantes.filter(p => p.id !== plante.id)));
-    let z = monPotager.find(z => z.nom === zNom); if(!z) { z = {nom:zNom, rangs:[]}; monPotager.push(z); }
-    let r = z.rangs.find(r => r.numero === rNum); if(!r) { r = {numero:rNum, plantes:[]}; z.rangs.push(r); }
-    r.plantes.push(plante);
+    monPotager.forEach(z => z.rangs.forEach(r => r.plantes = r.plantes.filter(x => x.id !== p.id)));
+    let z = monPotager.find(x => x.nom === zNom); if(!z){z={nom:zNom, rangs:[]}; monPotager.push(z);}
+    let r = z.rangs.find(x => x.numero === rNum); if(!r){r={numero:rNum, plantes:[]}; z.rangs.push(r);}
+    r.plantes.push(p);
     localStorage.setItem("data_potager", JSON.stringify(monPotager));
     switchTab('tab-liste');
 }
 
 function dupliquerPlante() { document.getElementById('edit-id').value = ""; validerFormulaire(); }
-
-function supprimerViaForm() {
-    if(!confirm("Supprimer ?")) return;
-    const id = parseInt(document.getElementById('edit-id').value);
-    monPotager.forEach(z => z.rangs.forEach(r => r.plantes = r.plantes.filter(p => p.id !== id)));
-    localStorage.setItem("data_potager", JSON.stringify(monPotager));
-    switchTab('tab-liste');
-}
-
-function exporterDonnees() {
-    const blob = new Blob([JSON.stringify(monPotager, null, 2)], {type: "application/json"});
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "mon_potager.json"; a.click();
-}
-
-function importerDonnees(event) {
-    const reader = new FileReader();
-    reader.onload = (e) => { 
-        try { 
-            monPotager = JSON.parse(e.target.result); 
-            localStorage.setItem("data_potager", JSON.stringify(monPotager)); 
-            location.reload(); 
-        } catch(err) { alert("Fichier invalide"); } 
-    };
-    reader.readAsText(event.target.files[0]);
-}
+function supprimerViaForm() { if(confirm("Supprimer ?")) { const id = parseInt(document.getElementById('edit-id').value); monPotager.forEach(z => z.rangs.forEach(r => r.plantes = r.plantes.filter(p => p.id !== id))); localStorage.setItem("data_potager", JSON.stringify(monPotager)); switchTab('tab-liste'); } }
+function exporterDonnees() { const blob = new Blob([JSON.stringify(monPotager)], {type:"application/json"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="mon_potager.json"; a.click(); }
+function importerDonnees(e) { const reader = new FileReader(); reader.onload=(ex)=>{ monPotager=JSON.parse(ex.target.result); localStorage.setItem("data_potager", JSON.stringify(monPotager)); location.reload(); }; reader.readAsText(e.target.files[0]); }
 
 updateSidebar(); afficherPotager();
 </script>
