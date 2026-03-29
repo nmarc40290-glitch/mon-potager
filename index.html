@@ -15,7 +15,7 @@
     .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
     
     /* Sidebar & Accordéon */
-    .sidebar { width: 260px; background: white; border-right: 1px solid #ddd; padding: 10px; overflow-y: auto; flex-shrink: 0; transition: transform 0.3s ease; z-index: 999; }
+    .sidebar { width: 260px; background: white; border-right: 1px solid #ddd; padding: 10px; overflow-y: auto; flex-shrink: 0; transition: transform 0.3s ease; z-index: 999; display: flex; flex-direction: column; }
     @media (max-width: 600px) {
       .sidebar { position: absolute; left: 0; top: 0; bottom: 0; transform: translateX(-100%); box-shadow: 5px 0 15px rgba(0,0,0,0.1); }
       .sidebar.open { transform: translateX(0); }
@@ -51,9 +51,12 @@
     .mois-grid input { width: 18px !important; }
 
     .btn-save { background: var(--primary); color: white; border: none; padding: 16px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 25px; }
-    .btn-duplicate { background: var(--edit, #2196f3); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; margin-top: 10px; cursor: pointer; font-weight: bold; }
+    .btn-duplicate { background: #2196f3; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; margin-top: 10px; cursor: pointer; font-weight: bold; }
     .btn-delete { background: white; color: var(--danger); border: 2px solid var(--danger); padding: 12px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 15px; }
     .cat-link { display: block; padding: 10px; color: #333; text-decoration: none; border-bottom: 1px solid #eee; cursor: pointer; }
+    
+    .sidebar-footer { margin-top: auto; padding-top: 20px; border-top: 1px solid #eee; }
+    .btn-sync { width: 100%; padding: 10px; margin-bottom: 8px; background: #fff; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; font-size: 0.8em; }
   </style>
 </head>
 <body>
@@ -68,38 +71,34 @@
     <div style="font-weight:bold; color:var(--primary); margin-bottom:10px;">FILTRES</div>
     <a class="cat-link" style="background:#e8f5e9; font-weight:bold;" onclick="filtrer('tout', null)">📋 TOUT AFFICHER</a>
     <div id="sidebar-content"></div>
+    
+    <div class="sidebar-footer">
+        <div style="font-size: 0.7em; color: #999; margin-bottom: 5px;">SAUVEGARDE MANUELLE</div>
+        <button class="btn-sync" onclick="exporterDonnees()">📥 Exporter (Backup)</button>
+        <button class="btn-sync" onclick="document.getElementById('fileInput').click()">📤 Importer (Restaurer)</button>
+        <input type="file" id="fileInput" style="display:none" onchange="importerDonnees(event)">
+    </div>
   </aside>
 
   <main class="content-area">
     <div id="tab-liste" class="section active"><div id="affichageDonnees"></div></div>
-
     <div id="tab-saisie" class="section">
       <form id="potagerForm">
         <input type="hidden" id="edit-id">
         <label>Plante *</label><input type="text" id="p_nom" required placeholder="Ex: Courgette">
-        
         <div style="display: flex; gap: 10px;">
           <div style="flex:1"><label>Zone</label><input type="text" id="p_zone" placeholder="Ex: A"></div>
-          <div style="flex:1">
-            <label>Rang</label>
-            <select id="p_rang"></select>
-          </div>
+          <div style="flex:1"><label>Rang</label><select id="p_rang"></select></div>
         </div>
-
         <div style="display: flex; gap: 10px;">
           <div style="flex:1"><label>Plantation</label><input type="date" id="p_date"></div>
           <div style="flex:1"><label>Arrachage</label><input type="date" id="p_date_fin"></div>
         </div>
-
-        <label>Récoltes</label>
-        <div class="mois-grid" id="moisGrid"></div>
-
-        <label>Notes</label>
-        <div id="notesArea"></div>
+        <label>Récoltes</label><div class="mois-grid" id="moisGrid"></div>
+        <label>Notes</label><div id="notesArea"></div>
         <button type="button" onclick="ajouterChampNote()" style="margin-top:10px; width:100%; padding:10px; border:1px dashed #ccc; background:none; border-radius:8px;">+ Ajouter une info</button>
-
         <button type="button" class="btn-save" onclick="validerFormulaire()">ENREGISTRER</button>
-        <button type="button" id="dup-btn" class="btn-duplicate" style="display:none;" onclick="dupliquerPlante()">DUPLIQUER CETTE PLANTE</button>
+        <button type="button" id="dup-btn" class="btn-duplicate" style="display:none;" onclick="dupliquerPlante()">DUPLIQUER</button>
         <button type="button" id="del-btn" class="btn-delete" style="display:none;" onclick="supprimerViaForm()">SUPPRIMER</button>
         <button type="button" style="width:100%; margin-top:10px; padding:12px; border:none; border-radius:8px;" onclick="switchTab('tab-liste')">ANNULER</button>
       </form>
@@ -112,9 +111,9 @@ let monPotager = JSON.parse(localStorage.getItem("data_potager")) || [];
 let filtreActuel = { type: 'tout', valeur: null };
 const MOIS_NOM = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
 
-// --- INITIALISATION ---
+// --- INIT ---
 const rangSelect = document.getElementById('p_rang');
-for(let i=1; i<=20; i++) { let opt = document.createElement('option'); opt.value = i; opt.innerText = "Rang " + i; rangSelect.appendChild(opt); }
+for(let i=1; i<=30; i++) { let opt = document.createElement('option'); opt.value = i; opt.innerText = "Rang " + i; rangSelect.appendChild(opt); }
 const grid = document.getElementById('moisGrid');
 MOIS_NOM.forEach(m => grid.innerHTML += `<label><input type="checkbox" name="mr" value="${m}"> ${m}</label>`);
 
@@ -126,26 +125,14 @@ function switchTab(tabId) {
   document.getElementById('menu-toggle').style.display = (tabId === 'tab-liste' && window.innerWidth <= 600) ? 'flex' : 'none';
   if(tabId === 'tab-liste') { updateSidebar(); afficherPotager(); document.getElementById('app-title').innerText = "MON POTAGER"; }
 }
-
 function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+function ouvrirAjout() { document.getElementById('potagerForm').reset(); document.getElementById('edit-id').value = ""; document.getElementById('notesArea').innerHTML = ""; document.getElementById('del-btn').style.display = "none"; document.getElementById('dup-btn').style.display = "none"; switchTab('tab-saisie'); ajouterChampNote(); }
 
-function ouvrirAjout() {
-  document.getElementById('potagerForm').reset();
-  document.getElementById('edit-id').value = "";
-  document.getElementById('notesArea').innerHTML = "";
-  document.getElementById('del-btn').style.display = "none";
-  document.getElementById('dup-btn').style.display = "none";
-  switchTab('tab-saisie');
-}
-
-// --- LOGIQUE DONNÉES ---
+// --- LOGIQUE ---
 function updateSidebar() {
   const data = { zones: new Set(), plantes: new Set() };
   monPotager.forEach(z => { data.zones.add(z.nom); z.rangs.forEach(r => r.plantes.forEach(p => data.plantes.add(p.nom))); });
-  
-  const container = document.getElementById('sidebar-content');
-  container.innerHTML = "";
-  
+  const container = document.getElementById('sidebar-content'); container.innerHTML = "";
   const creerAccordéon = (titre, items, type) => {
     if(items.size === 0) return;
     const group = document.createElement('div');
@@ -161,13 +148,13 @@ function filtrer(type, val) { filtreActuel = { type, valeur: val }; if(window.in
 
 function afficherPotager() {
   const container = document.getElementById('affichageDonnees'); container.innerHTML = "";
-  monPotager.forEach((zone, zIdx) => {
+  monPotager.sort((a,b) => a.nom.localeCompare(b.nom)).forEach((zone, zIdx) => {
     let zoneHtml = "";
     zone.rangs.sort((a,b) => a.numero - b.numero).forEach((rang, rIdx) => {
       rang.plantes.forEach((p, pIdx) => {
         if (filtreActuel.type === 'tout' || (filtreActuel.type === 'nom' && filtreActuel.valeur === p.nom) || (filtreActuel.type === 'zone' && filtreActuel.valeur === zone.nom)) {
           zoneHtml += `<div class="plante-card" onclick="preparerEdition(${zIdx},${rIdx},${pIdx})">
-            <div style="display:flex; justify-content:space-between"><strong>🌱 ${p.nom}</strong> <small>Rang ${rang.numero}</small></div>
+            <div style="display:flex; justify-content:space-between"><strong>🌱 ${p.nom}</strong> <small>R${rang.numero}</small></div>
             <div style="margin-top:5px">${p.recolte.map(m => `<span class="badge">${m}</span>`).join('')}</div>
           </div>`;
         }
@@ -189,7 +176,6 @@ function preparerEdition(zIdx, rIdx, pIdx) {
   document.getElementById('notesArea').innerHTML = ""; p.notes.forEach(n => ajouterChampNote(n.cat, n.val));
   document.getElementById('del-btn').style.display = "block";
   document.getElementById('dup-btn').style.display = "block";
-  document.getElementById('app-title').innerText = "ÉDITION";
   switchTab('tab-saisie');
 }
 
@@ -211,14 +197,11 @@ function validerFormulaire() {
   sauvegarder(); switchTab('tab-liste');
 }
 
-function dupliquerPlante() {
-    document.getElementById('edit-id').value = ""; // On enlève l'ID pour créer une nouvelle entrée
-    validerFormulaire();
-}
+function dupliquerPlante() { document.getElementById('edit-id').value = ""; validerFormulaire(); }
 
 function supprimerViaForm() {
   const id = parseInt(document.getElementById('edit-id').value);
-  if(id && confirm("Supprimer ?")) {
+  if(id && confirm("Supprimer définitivement ?")) {
     monPotager.forEach(z => z.rangs.forEach(r => r.plantes = r.plantes.filter(p => p.id !== id)));
     sauvegarder(); switchTab('tab-liste');
   }
@@ -235,7 +218,33 @@ function sauvegarder() {
   localStorage.setItem("data_potager", JSON.stringify(monPotager));
 }
 
-// Service Worker (Auto-update)
+// --- IMPORT / EXPORT ---
+function exporterDonnees() {
+  const data = JSON.stringify(monPotager, null, 2);
+  const blob = new Blob([data], {type: "application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "sauvegarde_potager.json"; a.click();
+}
+
+function importerDonnees(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (confirm("Remplacer les données actuelles par cette sauvegarde ?")) {
+        monPotager = data;
+        sauvegarder();
+        location.reload();
+      }
+    } catch (err) { alert("Erreur : Fichier invalide"); }
+  };
+  reader.readAsText(file);
+}
+
+// Mise à jour auto
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').then(reg => {
     reg.onupdatefound = () => {
