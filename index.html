@@ -74,7 +74,8 @@
 
 </head>
 <body>
-
+<button id="menu-toggle" onclick="toggleSidebar()">☰</button>
+  
 <nav>
   <button class="tab-btn active" id="btn-tab-saisie" onclick="switchTab('tab-saisie')">📝 SAISIE</button>
   <button class="tab-btn" id="btn-tab-liste" onclick="switchTab('tab-liste')">🌿 MON POTAGER</button>
@@ -378,6 +379,22 @@ function importerDonnees(event) {
 
 // Premier champ note au démarrage
 ajouterChampNote();
+  function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  sb.classList.toggle('open');
+  // Change l'icône du bouton
+  const btn = document.getElementById('menu-toggle');
+  btn.innerText = sb.classList.contains('open') ? '✕' : '☰';
+}
+
+// Modifie la fonction filtrer pour qu'elle ferme le menu automatiquement sur mobile après un clic
+const originalFiltrer = filtrer;
+filtrer = function(type, val) {
+  originalFiltrer(type, val);
+  if (window.innerWidth <= 600) {
+    toggleSidebar(); // Ferme le menu après avoir choisi un filtre
+  }
+};
 </script>
 </body>
 </html>
