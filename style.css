@@ -1,51 +1,41 @@
-:root {
-    --primary: #2e7d32; --accent: #4caf50; --bg: #f4f9f4; --text: #2c3e50;
-    --st-blue: #2196f3; --st-purple: #9c27b0; --st-green: #1b5e20; --st-grey: #757575;
+/* Grille des mois dans le formulaire */
+.mois-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    background: #f9f9f9;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+}
+.mois-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8em;
+}
+.mois-checkbox input {
+    width: auto;
+    margin: 0;
+}
+.mois-checkbox label {
+    margin: 0;
+    font-weight: normal;
+    cursor: pointer;
 }
 
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text); }
-
-header { background: var(--primary); color: white; height: 60px; display: flex; align-items: center; padding: 0 15px; justify-content: space-between; z-index: 100; flex-shrink: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-.btn-menu { background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
-
-.sidebar { position: fixed; left: 0; top: 60px; bottom: 0; width: 280px; background: white; border-right: 1px solid #ddd; z-index: 90; transform: translateX(-100%); transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); padding: 15px; overflow-y: auto; }
-.sidebar.open { transform: translateX(0); }
-
-.nav-link { padding: 14px; background: #f5f5f5; border-radius: 10px; margin-bottom: 10px; cursor: pointer; font-weight: bold; text-align: center; border: 1px solid #eee; }
-.nav-link.active { background: var(--primary); color: white; border-color: var(--primary); }
-
-details { margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px; }
-summary { font-size: 0.85em; font-weight: bold; color: #7f8c8d; cursor: pointer; padding: 5px 0; }
-.cat-link { display: block; padding: 10px; font-size: 0.95em; color: var(--text); cursor: pointer; border-radius: 5px; }
-.cat-link:hover { background: #e8f5e9; }
-
-.page { display: none; padding: 15px; height: 100%; overflow-y: auto; width: 100%; max-width: 800px; margin: 0 auto; }
-.page.active { display: block; }
-
-.zone-box { background: white; border-radius: 12px; border-left: 6px solid var(--primary); padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-.zone-box h2 { margin: 0 0 10px 0; font-size: 1.2em; color: var(--primary); }
-
-.plante-card { background: #fff; border: 1px solid #eee; padding: 15px; border-radius: 10px; margin-top: 10px; cursor: pointer; position: relative; }
-.badge { float: right; font-size: 0.7em; padding: 4px 8px; border-radius: 5px; color: white; font-weight: bold; text-transform: uppercase; }
-.bg-blue { background: var(--st-blue); }
-.bg-purple { background: var(--st-purple); }
-.bg-green { background: var(--st-green); }
-.bg-grey { background: var(--st-grey); }
-
-.db-wrapper { background: white; border-radius: 10px; overflow-x: auto; border: 1px solid #ddd; }
-table { width: 100%; border-collapse: collapse; font-size: 0.85em; min-width: 500px; }
-th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
-th { background: #fafafa; color: #7f8c8d; }
-
-.form-card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-.field { margin-bottom: 15px; }
-.row { display: flex; gap: 10px; }
-label { display: block; font-size: 0.85em; font-weight: bold; margin-bottom: 5px; color: #555; }
-input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; }
-
-.fab-add { position: fixed; bottom: 25px; right: 25px; width: 65px; height: 65px; border-radius: 50%; background: var(--accent); color: white; border: none; font-size: 35px; box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4); z-index: 80; cursor: pointer; }
-.btn-action { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1em; }
-.btn-main { background: var(--primary); color: white; }
-.btn-light { background: #eee; color: var(--text); }
-.btn-delete { background: none; color: #e74c3c; text-decoration: underline; }
+/* Organisation des boutons */
+.form-actions-main {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.form-actions-edit {
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+}
+.form-actions-edit .btn-action {
+    flex: 1;
+    margin-top: 0;
+}
