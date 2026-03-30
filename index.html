@@ -142,5 +142,154 @@ function migration() {
                     db.push({ id:Date.now()+Math.random(), nom:p.nom, zone:item.nom, rang:r.numero, typeInit:p.dateLevee?'semis':'plant', ds:p.date, dl:p.dateLevee, dr:p.dateRecolte, df:(p.dateFin==="Non définie"?"":p.dateFin), prev:p.recolte||[] });
                 }));
             } else { // Format V2
-                db.push({ id:item.id, nom:item.nom, zone:item.zone, rang:item.rang, typeInit:item.typeInit, ds:item.dateSaisie, dl:item.dateLevee, dr:item.dateRecolte, df:item.dateFin
-                         
+                db.push({ id:item.id, nom:item.nom, zone:item.zone, rang:item.rang, typeInit:item.typeInit, ds:item.dateSaisie, dl:item.dateLevee, dr:item.dateRecolte, df:item.dateFin, prev:item.prev||[] });
+            }
+        });
+        localStorage.setItem("db_v3", JSON.stringify(db));
+    }
+}
+migration();
+
+// --- LOGIQUE STATUT ---
+function getStatut(p) {
+    if (p.df) return { c:'fini', l:'FINI' };
+    if (p.dr) return { c:'recolte', l:'RÉCOLTE' };
+    if (p.typeInit === 'plant') return { c:'croissance', l:'PLANTÉ' };
+    return p.dl ? { c:'croissance', l:'LEVÉ' } : { c:'attente', l:'SEMÉ' };
+}
+
+// --- INTERFACE ---
+const fMois = document.getElementById('f-mois');
+MOIS.forEach(m => fMois.innerHTML += `<div class="mois-item"><input type="checkbox" name="m-prev" value="${m}">${m}</div>`);
+
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+function toggleLevee(v) { document.getElementById('f-div-levee').style.display = (v==='semis'?'block':'none'); }
+
+function switchTab(id) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    const btn = document.getElementById('btn-' + id);
+    if(btn) btn.classList.add('active');
+    if(id === 'tab-liste') renderListe();
+    if(id === 'tab-planning') renderPlanning();
+    document.getElementById('sidebar').classList.remove('open');
+}
+
+function renderListe() {
+    const cont = document.getElementById('liste-content');
+    const side = document.getElementById('side-zones');
+    cont.innerHTML = ""; side.innerHTML = "";
+    const zones = [...new Set(db.map(p => p.zone))].sort();
+
+    zones.forEach(z => {
+        side.innerHTML += `<a class="side-item" onclick="filtrer('${z}')">📍 Zone ${z}</a>`;
+        if(filtreZone !== 'tout' && filtreZone !== z) return;
+        let html = `<div class="zone-box"><h3>ZONE ${z}</h3>`;
+        db.filter(p => p.zone === z).forEach(p => {
+            const s = getStatut(p);
+            html += `<div class="plante-card" onclick="ouvrirEditer('${p.id}')">
+                <span class="badge bg-${s.c}">${s.l}</span>
+                <strong>${p.nom}</strong><br><small>Rang ${p.rang} | Début: ${p.ds || '?'}</small>
+            </div>`;
+        });
+        cont.innerHTML += html + `</div>`;
+    });
+}
+
+function renderPlanning() {
+    const body = document.getElementById('p-body');
+    document.getElementById('h-years').innerHTML = `<th class="col-nom">Légume</th><th colspan="12">2026</th>`;
+    document.getElementById('h-months').innerHTML = `<th class="col-nom"></th>` + MOIS.map(m => `<th>${m}</th>`).join('');
+    body.innerHTML = "";
+
+    db.sort((a,b) => a.nom.localeCompare(b.nom)).forEach(p => {
+        const s = getStatut(p);
+        let row = `<tr><td class="col-nom">${p.nom} <br><small>Z:${p.zone} R:${p.rang}</small></td>`;
+        MOIS.forEach((m, i) => {
+            let bars = "";
+            if(p.prev && p.prev.includes(m)) bars += `<div class="bar bg-prev"></div>`;
+            const mS = p.ds ? new Date(p.ds).getMonth() : -1;
+            const mF = p.df ? new Date(p.df).getMonth() : 11;
+            if(mS !== -1 && i >= mS && i <= mF) bars += `<div class="bar bg-${s.c}"></div>`;
+            row += `<td>${bars}</td>`;
+        });
+        body.innerHTML += row + "</tr>";
+    });
+}
+
+// --- ACTIONS ---
+function filtrer(z) { filtreZone = z; switchTab('tab-liste'); }
+
+function ouvrirAjout() {
+    document.getElementById('pForm').reset();
+    document.getElementById('f-id').value = "";
+    document.getElementById('f-btn-del').style.display = "none";
+    document.getElementById('f-btn-dup').style.display = "none";
+    toggleLevee('semis');
+    switchTab('tab-saisie');
+}
+
+function ouvrirEditer(id) {
+    const p = db.find(x => x.id == id);
+    if(!p) return;
+    document.getElementById('f-id').value = p.id;
+    document.getElementById('f-init').value = p.typeInit;
+    document.getElementById('f-nom').value = p.nom;
+    document.getElementById('f-zone').value = p.zone;
+    document.getElementById('f-rang').value = p.rang;
+    document.getElementById('f-dsaisie').value = p.ds;
+    document.getElementById('f-dlevee').value = p.dl;
+    document.getElementById('f-drecolte').value = p.dr;
+    document.getElementById('f-dfin').value = p.df;
+    document.querySelectorAll('input[name="m-prev"]').forEach(c => c.checked = p.prev.includes(c.value));
+    
+    document.getElementById('f-btn-del').style.display = "block";
+    document.getElementById('f-btn-dup').style.display = "block";
+    toggleLevee(p.typeInit);
+    switchTab('tab-saisie');
+}
+
+function sauver() {
+    const id = document.getElementById('f-id').value || Date.now();
+    const p = {
+        id,
+        typeInit: document.getElementById('f-init').value,
+        nom: document.getElementById('f-nom').value,
+        zone: document.getElementById('f-zone').value.toUpperCase() || "A",
+        rang: document.getElementById('f-rang').value,
+        ds: document.getElementById('f-dsaisie').value,
+        dl: document.getElementById('f-dlevee').value,
+        dr: document.getElementById('f-drecolte').value,
+        df: document.getElementById('f-dfin').value,
+        prev: Array.from(document.querySelectorAll('input[name="m-prev"]:checked')).map(c => c.value)
+    };
+    db = db.filter(x => x.id != id);
+    db.push(p);
+    localStorage.setItem("db_v3", JSON.stringify(db));
+    switchTab('tab-liste');
+}
+
+function dupliquer() {
+    document.getElementById('f-id').value = ""; // On vide l'ID pour créer une copie
+    sauver();
+}
+
+function supprimer() {
+    if(confirm("Supprimer ?")) {
+        db = db.filter(x => x.id != document.getElementById('f-id').value);
+        localStorage.setItem("db_v3", JSON.stringify(db));
+        switchTab('tab-liste');
+    }
+}
+
+function exportData() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
+    const dl = document.createElement('a'); dl.setAttribute("href", dataStr); dl.setAttribute("download", "potager_export.json"); dl.click();
+}
+
+// Init
+renderListe();
+</script>
+</body>
+</html>
