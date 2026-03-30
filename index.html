@@ -327,5 +327,23 @@ function importAndSaveAll(e) {
                         if(!r){ r={numero: rang.numero, plantes:[]}; z.rangs.push(r); }
                         r.plantes.push(p);
                     });
+                });
+            });
+            monPotager = nouveauPotager;
+            localStorage.setItem("data_potager", JSON.stringify(monPotager));
+            afficherPotager();
+            updateSidebar();
+            alert("Données importées avec statuts mis à jour !");
+        } catch(err) { alert("Erreur JSON."); }
+    };
+    reader.readAsText(e.target.files[0]);
+}
 
-    
+function dupliquerPlante() { document.getElementById('edit-id').value = ""; validerFormulaire(); }
+function supprimerViaForm() { if(confirm("Supprimer ?")) { const id = parseInt(document.getElementById('edit-id').value); monPotager.forEach(z => z.rangs.forEach(r => r.plantes = r.plantes.filter(p => p.id !== id))); localStorage.setItem("data_potager", JSON.stringify(monPotager)); switchTab('tab-liste'); } }
+
+updateSidebar();
+afficherPotager();
+</script>
+</body>
+</html>
