@@ -1,65 +1,8 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager Pro</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#2e7d32">
-    <link rel="apple-touch-icon" href="icon-512.png">
-</head>
-<body>
-
-<header>
-    <button class="btn-menu" id="menuToggle">☰</button>
-    <strong id="header-title">Ma Liste</strong>
-    <div id="filter-indicator"></div>
-</header>
-
-<aside id="sidebar" class="sidebar">
-    <nav class="nav-group">
-        <div class="nav-link active" data-target="page-list">📋 MA LISTE</div>
-        <div class="nav-link" data-target="page-database">💾 BASE DE DONNÉES</div>
-    </nav>
-
-    <details>
-        <summary>Filtrer par Variété</summary>
-        <div id="dynamic-filters"></div>
-    </details>
-
-    <details>
-        <summary>Système & Sauvegarde</summary>
-        <button class="btn-action btn-light" id="btnExport">Exporter JSON</button>
-        <button class="btn-action btn-light" onclick="document.getElementById('fileInput').click()">Importer JSON</button>
-        <input type="file" id="fileInput" style="display:none">
-    </details>
-</aside>
-
-<main>
-    <!-- PAGE 1 : LISTE -->
-    <section id="page-list" class="page active">
-        <div id="listContainer"></div>
-        <button class="fab-add" id="btnAdd">+</button>
-    </section>
-
-    <!-- PAGE 2 : SQL DATABASE -->
-    <section id="page-database" class="page">
-        <div class="db-wrapper">
-            <table>
-                <thead>
-                    <tr><th>ID</th><th>Nom</th><th>Zone</th><th>R.</th><th>Statut</th><th>Action</th></tr>
-                </thead>
-                <tbody id="sqlTableBody"></tbody>
-            </table>
-        </div>
-    </section>
-
-    <!-- PAGE 3 : FORMULAIRE -->
     <section id="page-form" class="page">
         <div class="form-card">
             <form id="potagerForm">
                 <input type="hidden" id="f_id">
+                
                 <div class="field">
                     <label>Mode de culture</label>
                     <select id="f_typeInit">
@@ -67,25 +10,42 @@
                         <option value="planter">Plantation (Plants)</option>
                     </select>
                 </div>
-                <div class="field"><label>Nom / Variété</label><input type="text" id="f_nom" required></div>
+
+                <div class="row">
+                    <div class="field" style="flex:2;"><label>Nom du légume</label><input type="text" id="f_nom" required placeholder="Ex: Tomate"></div>
+                    <div class="field" style="flex:1;"><label>Variété</label><input type="text" id="f_variete" placeholder="Marmande"></div>
+                </div>
+
                 <div class="row">
                     <div class="field"><label>Zone</label><input type="text" id="f_zone" placeholder="Ex: A"></div>
                     <div class="field"><label>Rang</label><input type="number" id="f_rang" value="1"></div>
                 </div>
-                <div class="field"><label id="lblDate">Date Action</label><input type="date" id="f_date"></div>
-                <div class="field" id="fieldLevee"><label>Date de levée (constatée)</label><input type="date" id="f_date_levee"></div>
-                <div class="field"><label>Début récolte estimé</label><input type="date" id="f_date_recolte"></div>
-                <div class="field"><label>Date de fin / Arrachage</label><input type="date" id="f_date_fin"></div>
-                <div class="field"><label>Notes</label><textarea id="f_notes" rows="2"></textarea></div>
 
-                <button type="submit" class="btn-action btn-main">💾 ENREGISTRER</button>
-                <button type="button" class="btn-action btn-delete" id="btnDelete">Supprimer la fiche</button>
-                <button type="button" class="btn-action btn-light" id="btnCancel">Annuler</button>
+                <div class="field"><label id="lblDateAction">Date Action</label><input type="date" id="f_date"></div>
+                
+                <div class="field" id="fieldLevee" style="display:none;"><label>Date de levée (constatée)</label><input type="date" id="f_date_levee"></div>
+                
+                <div class="field">
+                    <label>Période de récolte estimée (Orange sur planning)</label>
+                    <div id="moisGrid" class="mois-grid">
+                        </div>
+                </div>
+
+                <div class="field"><label>Date RÉELLE de début de récolte</label><input type="date" id="f_date_recolte_reelle"></div>
+                
+                <div class="field"><label>Date de fin / Arrachage</label><input type="date" id="f_date_fin"></div>
+                
+                <div class="field"><label>Notes & Suivi</label><textarea id="f_notes" rows="3"></textarea></div>
+
+                <div class="form-actions-main">
+                    <button type="submit" class="btn-action btn-main">💾 ENREGISTRER</button>
+                    <button type="button" class="btn-action btn-light" id="btnCancel">Annuler</button>
+                </div>
+
+                <div id="area-edit-actions" class="form-actions-edit" style="display:none; margin-top:20px; border-top:1px solid #eee; padding-top:10px;">
+                    <button type="button" class="btn-action btn-dup" id="btnDupliquer" style="background:#e8f5e9; color:#2e7d32;">👯 DUPLIQUER</button>
+                    <button type="button" class="btn-action btn-delete" id="btnDelete">Supprimer cette fiche</button>
+                </div>
             </form>
         </div>
     </section>
-</main>
-
-<script src="script.js"></script>
-</body>
-</html>
