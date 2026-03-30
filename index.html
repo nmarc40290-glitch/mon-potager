@@ -50,10 +50,23 @@
         .mois-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; background: #f1f1f1; padding: 15px; border-radius: 8px; }
 
         /* --- STYLES PLANNING AMÉLIORÉS --- */
-        #tab-planning { width: 100%; overflow: auto; background: white; }
+        #tab-planning { width: 100%; overflow: auto; background: white; position: relative; }
         .planning-table { border-collapse: collapse; table-layout: fixed; min-width: 1400px; }
         .planning-table th, .planning-table td { border: 1px solid #eee; padding: 6px 2px; text-align: center; font-size: 0.75em; height: 50px; position: relative; }
-        .col-nom { width: 160px !important; position: sticky; left: 0; background: white !important; z-index: 20; text-align: left !important; font-weight: bold; border-right: 2px solid var(--primary) !important; padding-left: 10px !important; }
+        
+        /* --- COLONNE DES NOMS FIXE --- */
+        .col-nom { 
+            width: 160px !important; 
+            position: sticky; 
+            left: 0; 
+            background: white !important; 
+            z-index: 20; 
+            text-align: left !important; 
+            font-weight: bold; 
+            border-right: 2px solid var(--primary) !important; 
+            padding-left: 10px !important;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+        }
         
         /* Conteneur pour permettre la superposition de barres */
         .planning-cell { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; width: 100%; position: absolute; top:0; left:0; }
@@ -241,6 +254,9 @@ function genererPlanning() {
         const dStart = p.date ? new Date(p.date) : null;
         const dFin = (p.dateFin && p.dateFin !== "Non définie") ? new Date(p.dateFin) : null;
         
+        // --- LOGIQUE DE FILTRAGE DES PREVISIONS ---
+        const aDemarreReallement = dStart !== null; // Elle n'a pas démarré si pas de date
+
         for(let y=START_YEAR; y<=END_YEAR; y++) {
             MOIS_NOM.forEach((m, mi) => {
                 const dateMoisDebut = new Date(y, mi, 1);
@@ -250,38 +266,43 @@ function genererPlanning() {
                 let barsHTML = "";
                 let classesCouleurs = [];
 
-                // 1. GESTION DES PRÉVISIONS (Orange) : Toujours affichée si cochée
-                if(p.recolte && p.recolte.includes(m)) {
-                    classesCouleurs.push("bg-prev");
-                }
+                // Si la ligne n'a PAS de date de mise en terre, on n'affiche absolument RIEN
+                if (aDemarreReallement) {
 
-                // 2. GESTION DU PASSÉ ET DU FUTUR
-                
-                // Si le mois est FUTUR (après TODAY) : On n'affiche QUE la prévision orange (déjà gérée)
-                const estFutur = dateMoisDebut > TODAY;
-
-                // Si le mois est PASSÉ ou PRÉSENT
-                if (!estFutur) {
-                    // Vérifier si la plante a déjà démarré (mise en terre)
-                    const aDemarre = dStart && dStart <= dateMoisFin;
-                    
-                    if (aDemarre) {
-                        const infoStatut = getStatutInfo(p, dateMoisFin);
-
-                        // Si la plante est finie, vérifier si ce mois-ci est le mois de l'arrachage
-                        if (infoStatut && infoStatut.color === 'gris') {
-                            const estMoisArrachage = dFin && dFin >= dateMoisDebut && dFin <= dateMoisFin;
-                            if (estMoisArrachage) {
-                                classesCouleurs.push("bg-gris");
-                            }
-                            // Si c'est APRES le mois d'arrachage, on n'affiche plus rien (vide)
-                        } 
-                        // Sinon (Bleu, Violet, Vert), on l'affiche
-                        else if (infoStatut) {
-                            classesCouleurs.push(`bg-${infoStatut.color}`);
-                        }
+                    // 1. GESTION DES PRÉVISIONS (Orange)
+                    // Elle n'apparaît QUE si la plante a une date de mise en terre (géré par le parent)
+                    if(p.recolte && p.recolte.includes(m)) {
+                        classesCouleurs.push("bg-prev");
                     }
-                    // Si dStart n'est pas encore passé, la cellule reste vide (géré implicitement)
+
+                    // 2. GESTION DU PASSÉ ET DU FUTUR
+                    
+                    // Si le mois est FUTUR (après TODAY) : On n'affiche QUE la prévision orange (déjà gérée)
+                    const estFutur = dateMoisDebut > TODAY;
+
+                    // Si le mois est PASSÉ ou PRÉSENT
+                    if (!estFutur) {
+                        // Vérifier si la plante a déjà démarré (mise en terre)
+                        const aDemarreAvantFinMois = dStart <= dateMoisFin;
+                        
+                        if (aDemarreAvantFinMois) {
+                            const infoStatut = getStatutInfo(p, dateMoisFin);
+
+                            // Si la plante est finie, vérifier si ce mois-ci est le mois de l'arrachage
+                            if (infoStatut && infoStatut.color === 'gris') {
+                                const estMoisArrachage = dFin && dFin >= dateMoisDebut && dFin <= dateMoisFin;
+                                if (estMoisArrachage) {
+                                    classesCouleurs.push("bg-gris");
+                                }
+                                // Si c'est APRES le mois d'arrachage, on n'affiche plus rien (vide)
+                            } 
+                            // Sinon (Bleu, Violet, Vert), on l'affiche
+                            else if (infoStatut) {
+                                classesCouleurs.push(`bg-${infoStatut.color}`);
+                            }
+                        }
+                        // Si dStart n'est pas encore passé, la cellule reste vide (géré implicitement)
+                    }
                 }
 
                 // --- GENERATION DU HTML POUR LES BARRES MULTIPLES ---
@@ -340,58 +361,4 @@ function ouvrirAjout() {
     document.getElementById('pForm').reset();
     document.getElementById('edit-id').value = "";
     document.getElementById('dup-btn').style.display = 'none';
-    document.getElementById('del-btn').style.display = 'none';
-    toggleLeveeField('semis');
-    switchTab('tab-saisie');
-}
-
-function preparerEdition(zi, ri, pi) {
-    const p = monPotager[zi].rangs[ri].plantes[pi];
-    ouvrirAjout();
-    document.getElementById('edit-id').value = p.id;
-    document.getElementById('p_nom').value = p.nom;
-    document.getElementById('p_init').value = p.typeInit || "semis";
-    document.getElementById('p_zone').value = monPotager[zi].nom;
-    document.getElementById('p_rang').value = monPotager[zi].rangs[ri].numero;
-    document.getElementById('p_date').value = p.date || "";
-    document.getElementById('p_date_levee').value = p.dateLevee || "";
-    document.getElementById('p_date_recolte').value = p.dateRecolte || "";
-    document.getElementById('p_date_fin').value = (p.dateFin === "Non définie") ? "" : p.dateFin;
-    document.getElementById('dup-btn').style.display = 'block';
-    document.getElementById('del-btn').style.display = 'block';
-    document.querySelectorAll('input[name="mr"]').forEach(cb => cb.checked = p.recolte.includes(cb.value));
-    toggleLeveeField(p.typeInit || "semis");
-}
-
-function updateSidebar() {
-    const data = { zones: new Set(), plantes: new Set() };
-    monPotager.forEach(z => { data.zones.add(z.nom); z.rangs.forEach(r => r.plantes.forEach(p => data.plantes.add(p.nom))); });
-    const container = document.getElementById('sidebar-content'); container.innerHTML = "";
-    const build = (titre, items, type, id) => {
-        let html = `<div class="sidebar-header" onclick="document.getElementById('${id}').classList.toggle('hidden')"><span>${titre}</span></div><div id="${id}" class="cat-content hidden">`;
-        Array.from(items).sort().forEach(v => html += `<a class="cat-link" onclick="filtrer('${type}', '${v}')">${v}</a>`);
-        container.innerHTML += html + `</div>`;
-    };
-    build("ZONES", data.zones, 'zone', 'side-z');
-    build("LÉGUMES", data.plantes, 'nom', 'side-l');
-}
-
-function filtrer(type, val) { filtreActuel = { type, valeur: val }; toggleSidebar(); afficherPotager(); }
-function exportData() {
-    const blob = new Blob([JSON.stringify(monPotager)], {type: "application/json"});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = "potager.json"; a.click();
-}
-function importData(e) {
-    const reader = new FileReader();
-    reader.onload = (ev) => { monPotager = JSON.parse(ev.target.result); localStorage.setItem("data_potager", JSON.stringify(monPotager)); location.reload(); };
-    reader.readAsText(e.target.files[0]);
-}
-function dupliquerPlante() { document.getElementById('edit-id').value = ""; validerFormulaire(); }
-function supprimerViaForm() { if(confirm("Supprimer ?")) { const id = parseInt(document.getElementById('edit-id').value); monPotager.forEach(z => z.rangs.forEach(r => r.plantes = r.plantes.filter(p => p.id !== id))); localStorage.setItem("data_potager", JSON.stringify(monPotager)); switchTab('tab-liste'); } }
-
-updateSidebar();
-afficherPotager();
-</script>
-</body>
-</html>
+    document.getElementById('
