@@ -131,6 +131,33 @@
 </div>
 
 <script>
+    // --- SÉCURITÉ : DUPLICATION DU STATUT ---
+function dupliquerStatutEnDonneeInitiale() {
+    let modificationFaite = false;
+    
+    monPotager.forEach(zone => {
+        zone.rangs.forEach(rang => {
+            rang.plantes.forEach(p => {
+                // Si la donnée "statut_initial" n'existe pas encore
+                if (!p.statut_initial) {
+                    // On duplique la valeur de "typeInit" (semis ou planter)
+                    // ou on met "semis" par défaut si c'est vide
+                    p.statut_initial = p.typeInit || "semis";
+                    modificationFaite = true;
+                }
+            });
+        });
+    });
+
+    if (modificationFaite) {
+        sauvegarder(); // Enregistre la nouvelle structure sans effacer l'ancienne
+        console.log("Migration terminée : 'statut_initial' a été créé pour chaque plante.");
+    }
+}
+
+// Lancer la duplication au chargement
+dupliquerStatutEnDonneeInitiale();
+    
 let monPotager = JSON.parse(localStorage.getItem("data_potager")) || [];
 let filtreActuel = { type: 'tout', valeur: null };
 const MOIS_NOM = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
