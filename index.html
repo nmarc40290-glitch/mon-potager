@@ -262,5 +262,21 @@ function exportData() {
 
 function importData(e) {
     const reader = new FileReader();
-    reader.onload = (ev
-    
+    reader.onload = (ev) => { 
+        try {
+            const data = JSON.parse(ev.target.result);
+            monPotager = data;
+            localStorage.setItem("data_potager", JSON.stringify(monPotager));
+            alert("Importation réussie : tous les champs personnalisés ont été chargés.");
+            afficherPotager();
+        } catch(err) {
+            alert("Erreur de fichier JSON.");
+        }
+    };
+    reader.readAsText(e.target.files[0]);
+}
+
+afficherPotager();
+</script>
+</body>
+</html>
