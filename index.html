@@ -3,129 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager Pro - Status Dynamiques</title>
+    <title>Mon Potager Pro - Final</title>
     <style>
         :root { 
-            --primary: #2e7d32; --accent: #4caf50; --bg: #f4f9f4; --text: #2c3e50;
-            --c-attente: #2196f3; /* Bleu : Semé mais pas levé */
-            --c-croissance: #9c27b0; /* Violet : Levé / En croissance */
-            --c-recolte: #1b5e20; /* Vert foncé : En production */
-            --c-fini: #757575; /* Gris : Arraché */
-            --c-prev: #ff9800; /* Orange : Prévisionnel */
+            --primary: #2e7d32; --primary-light: #e8f5e9; --accent: #4caf50; --bg: #f4f9f4; --text: #2c3e50;
+            --c-attente: #2196f3; --c-croissance: #9c27b0; --c-recolte: #1b5e20; --c-fini: #757575; --c-prev: #ff9800;
         }
         
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--bg); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text); }
+        
+        /* NAV & SIDEBAR */
         nav { background: var(--primary); color: white; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; flex-shrink: 0; }
         .nav-btns { display: flex; gap: 5px; }
         .nav-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 0.8em; font-weight: bold; }
         .nav-btn.active { background: white; color: var(--primary); }
 
-        .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
-        
+        .sidebar { width: 260px; background: white; border-right: 1px solid #ddd; padding: 15px; overflow-y: auto; position: absolute; left: 0; top: 0; bottom: 0; transform: translateX(-100%); transition: 0.3s; z-index: 1100; box-shadow: 5px 0 15px rgba(0,0,0,0.1); }
+        .sidebar.open { transform: translateX(0); }
+        .sidebar-header { font-size: 0.75em; font-weight: 900; color: #666; margin-top: 15px; padding: 10px; background: #f0f0f0; border-radius: 5px; cursor: pointer; }
+        .cat-link { display: block; padding: 10px 15px; color: #333; text-decoration: none; border-bottom: 1px solid #f9f9f9; cursor: pointer; font-size: 0.85em; }
+
         /* PLANNING STICKY */
+        .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
         #tab-planning { width: 100%; overflow: auto; background: white; position: relative; }
         .planning-table { border-collapse: collapse; table-layout: fixed; min-width: 1400px; }
         .planning-table th, .planning-table td { border: 1px solid #eee; padding: 6px 2px; text-align: center; font-size: 0.75em; height: 48px; }
+        .col-nom { width: 160px !important; position: sticky; left: 0; background: white !important; z-index: 20; text-align: left !important; font-weight: bold; border-right: 2px solid var(--primary) !important; padding-left: 10px !important; box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
         
-        .col-nom { 
-            width: 160px !important; position: sticky; left: 0; background: white !important; z-index: 20; 
-            text-align: left !important; font-weight: bold; border-right: 2px solid var(--primary) !important; padding-left: 10px !important;
-        }
-        
-        /* BARS */
+        /* BARS & BADGES */
         .bar { height: 10px; border-radius: 2px; width: 90%; margin: 1px auto; }
         .bg-attente { background-color: var(--c-attente); }
         .bg-croissance { background-color: var(--c-croissance); }
         .bg-recolte { background-color: var(--c-recolte); }
         .bg-fini { background-color: var(--c-fini); }
-        .bg-prev { background-color: var(--c-prev); border: 1px dashed white; }
+        .bg-prev { background-color: var(--c-prev); }
 
-        /* LISTE */
         .zone-box { background: white; margin: 15px; border-radius: 10px; border-left: 6px solid var(--primary); padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .plante-card { background: #fff; border: 1px solid #eee; margin: 8px 0; padding: 12px; border-radius: 8px; cursor: pointer; }
+        .plante-card { background: #fff; border: 1px solid #eee; margin: 8px 0; padding: 12px; border-radius: 8px; cursor: pointer; position: relative; }
         .status-badge { float: right; font-size: 0.65em; padding: 4px 8px; border-radius: 4px; color: white; font-weight: bold; }
 
         /* FORM */
-        .section { display: none; padding: 15px; height: 100%; overflow-y: auto; }
+        .section { display: none; padding: 15px; height: 100%; overflow-y: auto; box-sizing: border-box;}
         .section.active { display: block; }
-        form { background: white; padding: 20px; border-radius: 12px; max-width: 500px; margin: 0 auto; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        label { display: block; margin: 10px 0 5px; font-weight: bold; font-size: 0.9em; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        form { background: white; padding: 20px; border-radius: 12px; max-width: 500px; margin: 0 auto 100px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; margin-bottom: 15px; font-size: 16px; box-sizing: border-box;}
         .mois-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; background: #f9f9f9; padding: 10px; border-radius: 8px; }
         .mois-item { display: flex; flex-direction: column; align-items: center; font-size: 0.7em; }
 
         .fab-add { position: fixed; bottom: 20px; right: 20px; background: var(--accent); color: white; border: none; border-radius: 50%; width: 60px; height: 60px; font-size: 35px; cursor: pointer; z-index: 1001; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
 <nav>
-    <div style="font-weight:900;">🌿 MON POTAGER</div>
+    <div onclick="toggleSidebar()" style="cursor:pointer; font-weight:900;">☰ MON POTAGER</div>
     <div class="nav-btns">
-        <button class="nav-btn active" onclick="switchTab('tab-liste', this)">Liste</button>
-        <button class="nav-btn" onclick="switchTab('tab-planning', this)">Planning</button>
+        <button class="nav-btn active" id="btn-list" onclick="switchTab('tab-liste')">Liste</button>
+        <button class="nav-btn" id="btn-plan" onclick="switchTab('tab-planning')">Planning</button>
     </div>
 </nav>
+
+<aside id="sidebar" class="sidebar">
+    <a class="cat-link" style="font-weight:bold; background:var(--primary-light)" onclick="filtrer('tout')">📋 TOUT AFFICHER</a>
+    <div id="sidebar-content"></div>
+    <div class="sidebar-header" onclick="exportData()">📤 EXPORTER JSON</div>
+</aside>
 
 <button class="fab-add" onclick="ouvrirAjout()">+</button>
 
 <div class="main-container">
     <main class="content-area" style="width: 100%;">
-        <!-- LISTE -->
-        <div id="tab-liste" class="section active">
-            <div id="affichageDonnees"></div>
-        </div>
-
-        <!-- PLANNING -->
+        <div id="tab-liste" class="section active"><div id="affichageDonnees"></div></div>
+        
         <div id="tab-planning" class="section" style="padding:0;">
             <table class="planning-table">
-                <thead>
-                    <tr id="p-years"></tr>
-                    <tr id="p-months"></tr>
-                </thead>
+                <thead><tr id="p-years"></tr><tr id="p-months"></tr></thead>
                 <tbody id="p-body"></tbody>
             </table>
         </div>
 
-        <!-- FORMULAIRE -->
         <div id="tab-saisie" class="section">
             <form id="pForm">
                 <input type="hidden" id="edit-id">
-                
                 <label>Méthode de départ</label>
                 <select id="p_init" onchange="toggleForm(this.value)">
                     <option value="semis">🌱 Semis (Graines)</option>
                     <option value="plant">🚜 Plant (Mise en terre directe)</option>
                 </select>
-
-                <label>Nom du légume</label>
-                <input type="text" id="p_nom" placeholder="Ex: Tomate Coeur de Boeuf" required>
-
+                <label>Nom du légume</label><input type="text" id="p_nom" required>
                 <div style="display:flex; gap:10px;">
-                    <div style="flex:1;"><label>Zone</label><input type="text" id="p_zone" placeholder="A, B, Serre..."></div>
+                    <div style="flex:1;"><label>Zone</label><input type="text" id="p_zone"></div>
                     <div style="flex:1;"><label>Rang</label><input type="number" id="p_rang" value="1"></div>
                 </div>
-
-                <label>Date de départ (Semis ou Plantation)</label>
-                <input type="date" id="p_date_saisie" required>
-
-                <div id="div_levee">
-                    <label>Date de levée / Germination (Optionnel)</label>
-                    <input type="date" id="p_date_levee">
-                </div>
-
-                <label>Date de 1ère récolte (Optionnel)</label>
-                <input type="date" id="p_date_recolte">
-
-                <label>Date d'arrachage / Fin (Optionnel)</label>
-                <input type="date" id="p_date_fin">
-
-                <label>Mois de récolte prévus (Orange)</label>
-                <div class="mois-grid" id="moisGrid"></div>
-
+                <label>Date de départ (Semis/Plant)</label><input type="date" id="p_date_saisie" required>
+                <div id="div_levee"><label>Date de levée (Germination)</label><input type="date" id="p_date_levee"></div>
+                <label>Date de 1ère récolte</label><input type="date" id="p_date_recolte">
+                <label>Date d'arrachage / Fin</label><input type="date" id="p_date_fin">
+                <label>Récolte prévue (Orange)</label><div class="mois-grid" id="moisGrid"></div>
                 <div style="margin-top:20px; display:flex; flex-direction:column; gap:10px;">
                     <button type="button" onclick="enregistrer()" style="background:var(--primary); color:white; padding:15px; border:none; border-radius:8px; font-weight:bold;">SAUVEGARDER</button>
-                    <button type="button" id="btn-suppr" onclick="supprimer()" style="color:red; background:none; border:none; display:none;">Supprimer la fiche</button>
+                    <button type="button" id="btn-suppr" onclick="supprimer()" style="color:red; background:none; border:none; display:none; text-decoration:underline;">Supprimer</button>
                     <button type="button" onclick="switchTab('tab-liste')" style="background:#eee; padding:10px; border:none; border-radius:8px;">Annuler</button>
                 </div>
             </form>
@@ -134,45 +112,68 @@
 </div>
 
 <script>
-let potager = JSON.parse(localStorage.getItem("db_potager_v2")) || [];
+// --- LOGIQUE DE MIGRATION ---
+function migrerDonnees() {
+    let anciennesDonnees = JSON.parse(localStorage.getItem("data_potager")) || [];
+    let nouvellesDonnees = JSON.parse(localStorage.getItem("db_potager_v2")) || [];
+
+    if (anciennesDonnees.length > 0 && nouvellesDonnees.length === 0) {
+        anciennesDonnees.forEach(zone => {
+            zone.rangs.forEach(rang => {
+                rang.plantes.forEach(p => {
+                    nouvellesDonnees.push({
+                        id: p.id || Date.now().toString() + Math.random(),
+                        typeInit: p.dateLevee ? 'semis' : 'plant',
+                        nom: p.nom,
+                        zone: zone.nom,
+                        rang: rang.numero,
+                        dateSaisie: p.date,
+                        dateLevee: p.dateLevee,
+                        dateRecolte: p.dateRecolte,
+                        dateFin: (p.dateFin === "Non définie") ? "" : p.dateFin,
+                        prev: p.recolte || []
+                    });
+                });
+            });
+        });
+        localStorage.setItem("db_potager_v2", JSON.stringify(nouvellesDonnees));
+        console.log("Migration terminée !");
+    }
+    return nouvellesDonnees;
+}
+
+let potager = migrerDonnees();
+let filtreZone = 'tout';
 const MOIS = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jui", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
 
-// --- INITIALISATION ---
+// --- UI ---
 const grid = document.getElementById('moisGrid');
-MOIS.forEach(m => {
-    grid.innerHTML += `<div class="mois-item"><input type="checkbox" name="m_prev" value="${m}"> ${m}</div>`;
-});
+MOIS.forEach(m => { grid.innerHTML += `<div class="mois-item"><input type="checkbox" name="m_prev" value="${m}"> ${m}</div>`; });
 
-function toggleForm(val) {
-    document.getElementById('div_levee').style.display = (val === 'semis') ? 'block' : 'none';
-}
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+function toggleForm(val) { document.getElementById('div_levee').style.display = (val === 'semis') ? 'block' : 'none'; }
 
-function switchTab(id, btn) {
+function switchTab(id) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(id).classList.add('active');
-    if(btn) {
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-    }
-    if(id === 'tab-liste') majListe();
-    if(id === 'tab-planning') majPlanning();
+    if(id === 'tab-liste') { document.getElementById('btn-list').classList.add('active'); majListe(); majSidebar(); }
+    if(id === 'tab-planning') { document.getElementById('btn-plan').classList.add('active'); majPlanning(); }
+    document.getElementById('sidebar').classList.remove('open');
 }
 
-// --- CALCULATEUR DE STATUT (COEUR DU SYSTEME) ---
+// --- LOGIQUE STATUT ---
 function getStatut(p) {
-    if (p.dateFin) return { code: 'fini', label: 'ARR' };
-    if (p.dateRecolte) return { code: 'recolte', label: 'RÉC' };
-    if (p.typeInit === 'plant') return { code: 'croissance', label: 'CRO' };
-    if (p.typeInit === 'semis') {
-        return p.dateLevee ? { code: 'croissance', label: 'LEV' } : { code: 'attente', label: 'SEM' };
-    }
-    return { code: 'attente', label: '?' };
+    if (p.dateFin) return { code: 'fini', label: 'FINI' };
+    if (p.dateRecolte) return { code: 'recolte', label: 'RÉCOLTE' };
+    if (p.typeInit === 'plant') return { code: 'croissance', label: 'PLANTÉ' };
+    return p.dateLevee ? { code: 'croissance', label: 'LEVÉ' } : { code: 'attente', label: 'SEMÉ' };
 }
 
-// --- LOGIQUE DONNÉES ---
+// --- ACTIONS ---
 function enregistrer() {
     const id = document.getElementById('edit-id').value || Date.now().toString();
-    const nouvellePlante = {
+    const p = {
         id,
         typeInit: document.getElementById('p_init').value,
         nom: document.getElementById('p_nom').value,
@@ -184,9 +185,8 @@ function enregistrer() {
         dateFin: document.getElementById('p_date_fin').value,
         prev: Array.from(document.querySelectorAll('input[name="m_prev"]:checked')).map(c => c.value)
     };
-
     potager = potager.filter(x => x.id !== id);
-    potager.push(nouvellePlante);
+    potager.push(p);
     localStorage.setItem("db_potager_v2", JSON.stringify(potager));
     switchTab('tab-liste');
 }
@@ -194,58 +194,55 @@ function enregistrer() {
 function majListe() {
     const cont = document.getElementById('affichageDonnees');
     cont.innerHTML = "";
-    
-    // Groupement par zone
     const zones = [...new Set(potager.map(p => p.zone))].sort();
     
     zones.forEach(z => {
+        if(filtreZone !== 'tout' && filtreZone !== z) return;
         let html = `<div class="zone-box"><h3>ZONE ${z}</h3>`;
         potager.filter(p => p.zone === z).forEach(p => {
             const st = getStatut(p);
-            html += `
-                <div class="plante-card" onclick="ouvrirEdition('${p.id}')">
-                    <span class="status-badge bg-${st.code}">${st.label}</span>
-                    <strong>${p.nom}</strong><br>
-                    <small>Départ: ${p.dateSaisie} | Rang: ${p.rang}</small>
-                </div>`;
+            html += `<div class="plante-card" onclick="ouvrirEdition('${p.id}')">
+                <span class="status-badge bg-${st.code}">${st.label}</span>
+                <strong>${p.nom}</strong><br><small>Rang ${p.rang} | Départ: ${p.dateSaisie}</small>
+            </div>`;
         });
         cont.innerHTML += html + `</div>`;
     });
 }
 
 function majPlanning() {
+    const body = document.getElementById('p-body');
     const hY = document.getElementById('p-years');
     const hM = document.getElementById('p-months');
-    const body = document.getElementById('p-body');
-    const year = 2026;
-
-    hY.innerHTML = `<th class="col-nom">Légume</th><th colspan="12">${year}</th>`;
+    hY.innerHTML = `<th class="col-nom">Légume</th><th colspan="12">2026</th>`;
     hM.innerHTML = `<th class="col-nom"></th>` + MOIS.map(m => `<th>${m}</th>`).join('');
     body.innerHTML = "";
 
     potager.sort((a,b) => a.nom.localeCompare(b.nom)).forEach(p => {
         const st = getStatut(p);
         let row = `<tr><td class="col-nom">${p.nom} <br><small>Z:${p.zone} R:${p.rang}</small></td>`;
-        
         MOIS.forEach((m, idx) => {
-            let content = "";
-            // Barre de prévision (Orange)
-            if(p.prev.includes(m)) content += `<div class="bar bg-prev"></div>`;
-            
-            // Barre de statut réel (si le mois correspond à l'état actuel ou passé)
-            // Note : Pour simplifier le visuel, on affiche le statut sur les mois concernés
-            const dS = new Date(p.dateSaisie);
-            if(dS.getMonth() <= idx && !p.dateFin) {
-                content += `<div class="bar bg-${st.code}"></div>`;
-            } else if (p.dateFin && dS.getMonth() <= idx && new Date(p.dateFin).getMonth() >= idx) {
-                content += `<div class="bar bg-${st.code}"></div>`;
-            }
-
-            row += `<td>${content}</td>`;
+            let bars = "";
+            if(p.prev.includes(m)) bars += `<div class="bar bg-prev"></div>`;
+            const mS = p.dateSaisie ? new Date(p.dateSaisie).getMonth() : -1;
+            const mF = p.dateFin ? new Date(p.dateFin).getMonth() : 11;
+            if(mS !== -1 && idx >= mS && idx <= mF) bars += `<div class="bar bg-${st.code}"></div>`;
+            row += `<td>${bars}</td>`;
         });
         body.innerHTML += row + `</tr>`;
     });
 }
+
+function majSidebar() {
+    const cont = document.getElementById('sidebar-content');
+    const zones = [...new Set(potager.map(p => p.zone))].sort();
+    cont.innerHTML = `<div class="sidebar-header">FILTRER PAR ZONE</div>`;
+    zones.forEach(z => {
+        cont.innerHTML += `<a class="cat-link" onclick="filtrer('${z}')">Zone ${z}</a>`;
+    });
+}
+
+function filtrer(z) { filtreZone = z; switchTab('tab-liste'); }
 
 function ouvrirAjout() {
     document.getElementById('pForm').reset();
@@ -255,7 +252,7 @@ function ouvrirAjout() {
 }
 
 function ouvrirEdition(id) {
-    const p = potager.find(x => x.id === id);
+    const p = potager.find(x => x.id == id);
     document.getElementById('edit-id').value = p.id;
     document.getElementById('p_init').value = p.typeInit;
     document.getElementById('p_nom').value = p.nom;
@@ -265,27 +262,29 @@ function ouvrirEdition(id) {
     document.getElementById('p_date_levee').value = p.dateLevee;
     document.getElementById('p_date_recolte').value = p.dateRecolte;
     document.getElementById('p_date_fin').value = p.dateFin;
-    
-    document.querySelectorAll('input[name="m_prev"]').forEach(c => {
-        c.checked = p.prev.includes(c.value);
-    });
-    
+    document.querySelectorAll('input[name="m_prev"]').forEach(c => c.checked = p.prev.includes(c.value));
     document.getElementById('btn-suppr').style.display = "block";
     toggleForm(p.typeInit);
     switchTab('tab-saisie');
 }
 
 function supprimer() {
-    if(confirm("Supprimer cette fiche ?")) {
-        const id = document.getElementById('edit-id').value;
-        potager = potager.filter(x => x.id !== id);
+    if(confirm("Supprimer ?")) {
+        potager = potager.filter(x => x.id != document.getElementById('edit-id').value);
         localStorage.setItem("db_potager_v2", JSON.stringify(potager));
         switchTab('tab-liste');
     }
 }
 
-// Start
+function exportData() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(potager));
+    const dl = document.createElement('a'); dl.setAttribute("href", dataStr); dl.setAttribute("download", "mon_potager_v2.json"); dl.click();
+}
+
+// Lancement
 majListe();
+majSidebar();
 </script>
 </body>
 </html>
+
