@@ -340,4 +340,14 @@ function exportData() {
 
 function importData(event) {
     const reader = new FileReader();
-    reader.onlo
+    reader.onload = function(e) {
+        try { monPotager = JSON.parse(e.target.result); sauvegarder(); location.reload(); } catch (err) { alert("Erreur fichier"); }
+    };
+    reader.readAsText(event.target.files[0]);
+}
+
+updateSidebar(); 
+afficherPotager();
+</script>
+</body>
+</html>
