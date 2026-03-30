@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - Statuts Détaillés</title>
+    <title>Mon Potager - Statuts Précis</title>
     <style>
         :root { 
             --primary: #2e7d32; --primary-light: #e8f5e9; --accent: #4caf50; --danger: #d32f2f; 
@@ -17,33 +17,28 @@
         .nav-btn.active { background: white; color: var(--primary); }
         .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
         
-        /* Sidebar */
         .sidebar { width: 260px; background: white; border-right: 1px solid #ddd; padding: 15px; overflow-y: auto; position: absolute; left: 0; top: 0; bottom: 0; transform: translateX(-100%); transition: 0.3s; z-index: 1100; box-shadow: 5px 0 15px rgba(0,0,0,0.1); }
         .sidebar.open { transform: translateX(0); }
         .sidebar-header { font-size: 0.75em; font-weight: 900; color: #666; margin-top: 15px; padding: 10px; background: #f0f0f0; border-radius: 5px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .cat-content.hidden { display: none; }
         .cat-link { display: block; padding: 10px 15px; color: #333; text-decoration: none; border-bottom: 1px solid #f9f9f9; cursor: pointer; font-size: 0.85em; }
         
-        /* Liste & Cards */
         .content-area { flex: 1; overflow-y: auto; padding-bottom: 80px; }
         .section { display: none; padding: 15px; }
         .section.active { display: block; }
         .zone-box { background: white; margin-bottom: 20px; border-radius: 10px; border-left: 6px solid var(--primary); padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .plante-card { background: #fff; border: 1px solid #eee; margin: 8px 0; padding: 12px; border-radius: 8px; cursor: pointer; position: relative; }
+        .plante-card { background: #fff; border: 1px solid #eee; margin: 8px 0; padding: 12px; border-radius: 8px; cursor: pointer; position: relative; min-height: 50px; }
         
-        /* Badge de statut plus large pour les noms combinés */
-        .status-badge { float: right; font-size: 0.65em; padding: 4px 8px; border-radius: 4px; color: white; font-weight: bold; text-transform: uppercase; white-space: nowrap; }
+        .status-badge { float: right; font-size: 0.65em; padding: 4px 8px; border-radius: 4px; color: white; font-weight: bold; text-transform: uppercase; white-space: nowrap; margin-left: 5px; }
         .st-semis { background: var(--c-semis); }
         .st-sortis { background: var(--c-levee); }
         .st-recolte { background: var(--c-recolte); }
         .st-arracher { background: var(--c-fini); }
 
-        /* Formulaire */
         form { background: white; padding: 20px; border-radius: 12px; max-width: 500px; margin: 0 auto; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; margin-bottom: 10px; font-size: 16px; }
         .mois-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; background: #f1f1f1; padding: 15px; border-radius: 8px; }
 
-        /* Planning */
         #tab-planning { width: 100%; overflow: auto; background: white; }
         .planning-table { border-collapse: collapse; table-layout: fixed; min-width: 1400px; }
         .planning-table th, .planning-table td { border: 1px solid #eee; padding: 6px 2px; text-align: center; font-size: 0.75em; height: 45px; position: relative; }
@@ -142,7 +137,7 @@ function switchTab(tabId) {
     document.getElementById('sidebar').classList.remove('open');
 }
 
-// Calculer le type technique pour la couleur du badge
+// Déterminer la couleur technique du badge
 function calculerTypeCouleur(p, dateRef = TODAY) {
     const dStart = p.date ? new Date(p.date) : null;
     const dLevee = p.dateLevee ? new Date(p.dateLevee) : null;
@@ -165,7 +160,6 @@ function afficherPotager() {
             rang.plantes.forEach((p, pIdx) => {
                 if (filtreActuel.type === 'tout' || (filtreActuel.type === 'nom' && filtreActuel.valeur === p.nom) || (filtreActuel.type === 'zone' && filtreActuel.valeur === zone.nom)) {
                     const typeCouleur = calculerTypeCouleur(p);
-                    // On affiche ici le statut combiné (ex: Semis - Levé)
                     const labelStatut = p.statut_final || "En cours";
                     
                     cards += `<div class="plante-card" onclick="preparerEdition(${zIdx},${monPotager[zIdx].rangs.indexOf(rang)},${pIdx})">
@@ -187,13 +181,22 @@ function validerFormulaire() {
     const dRec = document.getElementById('p_date_recolte').value;
     const dFin = document.getElementById('p_date_fin').value;
 
-    // --- CRÉATION DU STATUT COMBINÉ POUR L'ONGLET LISTE ---
+    // --- LOGIQUE STATUTS PRÉCIS ---
+    let labelType = (typeInit === 'semis') ? "Semis" : "Plantation";
     let etat = "En terre";
-    if (dFin) etat = "Fini";
-    else if (dRec) etat = "Récolte";
-    else if (typeInit === 'semis' && dLevee) etat = "Levé";
-    else if (typeInit === 'semis') etat = "Sous terre";
-    let statutFinal = `${(typeInit === 'semis') ? "Semis" : "Plantation"} - ${etat}`;
+
+    if (dFin) {
+        labelType = ""; // On ne garde que "Fini" si c'est arraché
+        etat = "Fini";
+    } else if (dRec) {
+        etat = "Récolte";
+    } else if (typeInit === 'semis') {
+        etat = dLevee ? "En attente récolte" : "Sous terre";
+    } else if (typeInit === 'planter') {
+        etat = "En attente récolte";
+    }
+
+    let statutFinal = labelType ? `${labelType} - ${etat}` : etat;
 
     const p = { 
         id: document.getElementById('edit-id').value ? parseInt(document.getElementById('edit-id').value) : Date.now(), 
