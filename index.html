@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - Version Stable</title>
+    <title>Mon Potager - Édition Complète</title>
     <style>
         :root { 
             --primary: #2e7d32; --primary-light: #e8f5e9; --accent: #4caf50; --danger: #d32f2f; 
@@ -27,7 +27,7 @@
         .cat-content.hidden { display: none; }
         .cat-link { display: block; padding: 10px 15px; color: #333; text-decoration: none; border-bottom: 1px solid #f9f9f9; cursor: pointer; font-size: 0.85em; }
 
-        /* PLANNING & STICKY CORRECTION */
+        /* PLANNING */
         #tab-planning { width: 100%; overflow: auto; background: white; position: relative; }
         .planning-table { border-collapse: collapse; table-layout: fixed; min-width: 1400px; }
         .planning-table th, .planning-table td { border: 1px solid #eee; padding: 6px 2px; text-align: center; font-size: 0.75em; height: 45px; position: relative; }
@@ -106,10 +106,10 @@
             <form id="pForm">
                 <input type="hidden" id="edit-id">
                 <div id="creation-status-div">
-                    <label>Méthode de départ</label>
+                    <label>Type de culture (Base)</label>
                     <select id="p_init" onchange="toggleLeveeField(this.value)">
-                        <option value="semis">🌱 Semis (Bleu)</option>
-                        <option value="planter">🚜 Plantation directe (Vert)</option>
+                        <option value="semis">🌱 Semis (Graines)</option>
+                        <option value="planter">🚜 Plantation (Plants)</option>
                     </select>
                 </div>
                 <label>Nom du légume</label><input type="text" id="p_nom" required>
@@ -160,27 +160,22 @@ function switchTab(tabId) {
     if(tabId === 'tab-planning') { document.getElementById('btn-plan').classList.add('active'); genererPlanning(); }
 }
 
-// --- LOGIQUE METIER CORRIGÉE ---
 function calculerStatutUnique(p, dateRef = TODAY) {
     const dStart = p.date ? new Date(p.date) : null;
     const dLevee = p.dateLevee ? new Date(p.dateLevee) : null;
     const dRec = p.dateRecolte ? new Date(p.dateRecolte) : null;
     const dFin = (p.dateFin && p.dateFin !== "Non définie") ? new Date(p.dateFin) : null;
-
     if (dFin && dateRef > dFin) return 'arracher';
     if (dRec && dateRef >= dRec) return 'recolte';
-    
     if (p.typeInit === 'semis') {
         if (dLevee && dateRef >= dLevee) return 'sortis';
         if (dStart && dateRef >= dStart) return 'semis';
     } else {
-        // Mode Plantation : on passe directement en vert (croissance/récolte) dès la mise en terre
         if (dStart && dateRef >= dStart) return 'recolte';
     }
     return null;
 }
 
-// --- AFFICHAGE ---
 function afficherPotager() {
     const container = document.getElementById('affichageDonnees'); container.innerHTML = "";
     monPotager.forEach((zone, zIdx) => {
@@ -215,19 +210,15 @@ function genererPlanning() {
     const hY = document.getElementById('p-years'); 
     const hM = document.getElementById('p-months'); 
     const body = document.getElementById('p-body');
-    
     hY.innerHTML = hM.innerHTML = '<th class="col-nom">Légume</th>'; 
     body.innerHTML = "";
-    
     for(let y = minYear; y <= maxYear; y++) {
         hY.innerHTML += `<th colspan="12" style="background:#333; color:white;">${y}</th>`;
         MOIS_NOM.forEach((m, i) => {
-            let isCurrentMonth = (y == TODAY.getFullYear() && i == TODAY.getMonth());
-            let curStyle = isCurrentMonth ? 'style="background:#fff0f0; border:2px solid red !important;"' : '';
+            let curStyle = (y == TODAY.getFullYear() && i == TODAY.getMonth()) ? 'style="background:#fff0f0; border:2px solid red !important;"' : '';
             hM.innerHTML += `<th ${curStyle}>${m}</th>`;
         });
     }
-
     let flat = []; 
     monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => flat.push({...p, zone:z.nom, rNum:r.numero}))));
     flat.sort((a,b) => a.nom.localeCompare(b.nom)).forEach(p => {
@@ -238,7 +229,6 @@ function genererPlanning() {
                 const st = calculerStatutUnique(p, dateMoisFin);
                 const aDemarre = p.date && new Date(p.date) <= dateMoisFin;
                 const isPrev = p.recolte && p.recolte.includes(m) && aDemarre;
-                
                 let bars = "";
                 if (isPrev) bars += `<div class="bar bg-prev"></div>`;
                 if (st) {
@@ -252,21 +242,39 @@ function genererPlanning() {
     });
 }
 
-// --- CRUD ---
 function validerFormulaire() {
     const nom = document.getElementById('p_nom').value; if(!nom) return;
+    const typeInit = document.getElementById('p_init').value; 
+    const dStart = document.getElementById('p_date').value;
+    const dLevee = document.getElementById('p_date_levee').value;
+    const dRec = document.getElementById('p_date_recolte').value;
+    const dFin = document.getElementById('p_date_fin').value;
+
+    let statutReel = "";
+    if (typeInit === 'semis') {
+        statutReel = "semis";
+        if (dLevee) statutReel = "semis_sorti";
+        if (dRec) statutReel = "semis_recolte";
+        if (dFin && dFin !== "Non définie" && dFin !== "") statutReel = "semis_arrache";
+    } else {
+        statutReel = "plante";
+        if (dRec) statutReel = "plante_recolte";
+        if (dFin && dFin !== "Non définie" && dFin !== "") statutReel = "plante_arrache";
+    }
+
     const p = { 
         id: document.getElementById('edit-id').value ? parseInt(document.getElementById('edit-id').value) : Date.now(), 
         nom, 
-        typeInit: document.getElementById('p_init').value,
-        date: document.getElementById('p_date').value, 
-        dateLevee: document.getElementById('p_date_levee').value, 
-        dateRecolte: document.getElementById('p_date_recolte').value, 
-        dateFin: document.getElementById('p_date_fin').value || "Non définie", 
+        typeInit,
+        statut_reel: statutReel, 
+        date: dStart, 
+        dateLevee: dLevee, 
+        dateRecolte: dRec, 
+        dateFin: dFin || "Non définie", 
         recolte: Array.from(document.querySelectorAll('input[name="mr"]:checked')).map(cb => cb.value) 
     };
+
     const zN = document.getElementById('p_zone').value.toUpperCase() || "A"; const rN = document.getElementById('p_rang').value;
-    
     monPotager.forEach(z => z.rangs.forEach(r => r.plantes = r.plantes.filter(x => x.id !== p.id)));
     let z = monPotager.find(x => x.nom === zN); if(!z){z={nom:zN, rangs:[]}; monPotager.push(z);}
     let r = z.rangs.find(x => x.numero === rN); if(!r){r={numero:rN, plantes:[]}; z.rangs.push(r);}
@@ -295,7 +303,7 @@ function filtrer(type, val) { filtreActuel = { type, valeur: val }; toggleSideba
 function ouvrirAjout() { 
     document.getElementById('pForm').reset(); 
     document.getElementById('edit-id').value = ""; 
-    document.getElementById('creation-status-div').style.display = 'block'; 
+    document.getElementById('creation-status-div').style.display = 'block'; // Toujours visible
     document.getElementById('dup-btn').style.display = 'none'; 
     document.getElementById('del-btn').style.display = 'none'; 
     toggleLeveeField('semis'); switchTab('tab-saisie'); 
@@ -312,7 +320,10 @@ function preparerEdition(zi, ri, pi) {
     document.getElementById('p_date_levee').value = p.dateLevee || "";
     document.getElementById('p_date_recolte').value = p.dateRecolte || ""; 
     document.getElementById('p_date_fin').value = p.dateFin === "Non définie" ? "" : p.dateFin;
-    document.getElementById('creation-status-div').style.display = 'none'; 
+    
+    // CHANGEMENT ICI : Le menu reste visible pour permettre le changement de type
+    document.getElementById('creation-status-div').style.display = 'block'; 
+    
     document.getElementById('dup-btn').style.display = 'block'; 
     document.getElementById('del-btn').style.display = 'block';
     document.querySelectorAll('input[name="mr"]').forEach(cb => cb.checked = p.recolte.includes(cb.value));
@@ -329,14 +340,4 @@ function exportData() {
 
 function importData(event) {
     const reader = new FileReader();
-    reader.onload = function(e) {
-        try { monPotager = JSON.parse(e.target.result); sauvegarder(); location.reload(); } catch (err) { alert("Erreur fichier"); }
-    };
-    reader.readAsText(event.target.files[0]);
-}
-
-updateSidebar(); 
-afficherPotager();
-</script>
-</body>
-</html> 
+    reader.onlo
