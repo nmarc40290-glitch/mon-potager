@@ -5,11 +5,13 @@
   "display": "standalone",
   "background_color": "#f4f9f4",
   "theme_color": "#2e7d32",
+  "description": "Gestion de mon potager par zone et rangée",
   "icons": [
     {
       "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
