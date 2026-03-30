@@ -183,16 +183,16 @@ function validerFormulaire() {
 
     // --- LOGIQUE STATUTS PRÉCIS ---
     let labelType = (typeInit === 'semis') ? "Semis" : "Plantation";
-    let etat = "En terre";
+    let etat = "";
 
     if (dFin) {
-        labelType = ""; // On ne garde que "Fini" si c'est arraché
+        labelType = ""; // Vide pour n'afficher que "Fini"
         etat = "Fini";
     } else if (dRec) {
         etat = "Récolte";
     } else if (typeInit === 'semis') {
         etat = dLevee ? "En attente récolte" : "Sous terre";
-    } else if (typeInit === 'planter') {
+    } else {
         etat = "En attente récolte";
     }
 
