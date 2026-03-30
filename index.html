@@ -14,9 +14,8 @@
         
         nav { background: var(--primary); color: white; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; flex-shrink: 0; }
         .nav-left { display: flex; align-items: center; gap: 15px; }
-        .nav-btns { display: flex; gap: 5px; }
         .nav-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 0.8em; font-weight: bold; }
-        .nav-btn.active { background: white; color: var(--primary); }
+        .nav-btn:hover { background: rgba(255,255,255,0.3); }
 
         .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
         
@@ -29,6 +28,13 @@
         .content-area { flex: 1; overflow-y: auto; padding-bottom: 80px; }
         .section { display: none; padding: 15px; }
         .section.active { display: block; }
+
+        /* TABLEAU STYLE SQL */
+        .sql-table-container { width: 100%; overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85em; min-width: 800px; }
+        th { background: #34495e; color: white; padding: 12px; text-align: left; position: sticky; top: 0; }
+        td { padding: 10px; border-bottom: 1px solid #eee; }
+        tr:hover { background: #f1f1f1; }
 
         .zone-box { background: white; margin-bottom: 20px; border-radius: 10px; border-left: 6px solid var(--primary); padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .plante-card { background: #fff; border: 1px solid #eee; margin: 8px 0; padding: 12px; border-radius: 8px; cursor: pointer; position: relative; min-height: 50px; }
@@ -53,11 +59,8 @@
 <nav>
     <div class="nav-left">
         <div onclick="toggleSidebar()" style="cursor:pointer; font-weight:900;">☰ MENU</div>
-        <!-- Bouton Liste ajouté ici -->
         <button class="nav-btn" onclick="switchTab('tab-liste')">📋 LISTE</button>
-    </div>
-    <div class="nav-btns">
-        <button class="nav-btn active" id="btn-list">Mon Potager</button>
+        <button class="nav-btn" onclick="switchTab('tab-sql')">🗄️ TABLEAU SQL</button>
     </div>
 </nav>
 
@@ -74,10 +77,34 @@
     </aside>
 
     <main class="content-area">
+        <!-- VUE LISTE -->
         <div id="tab-liste" class="section active">
             <div id="affichageDonnees"></div>
         </div>
 
+        <!-- VUE SQL (TABLEAU) -->
+        <div id="tab-sql" class="section">
+            <div class="sql-table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Zone</th>
+                            <th>Rang</th>
+                            <th>Type</th>
+                            <th>Légume</th>
+                            <th>Date S/P</th>
+                            <th>Levée</th>
+                            <th>Récolte</th>
+                            <th>Fin</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sql-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PAGE SAISIE -->
         <div id="tab-saisie" class="section">
             <form id="pForm">
                 <input type="hidden" id="edit-id">
@@ -142,6 +169,7 @@ function switchTab(tabId) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     if(tabId === 'tab-liste') { updateSidebar(); afficherPotager(); }
+    if(tabId === 'tab-sql') { afficherTableauSQL(); }
     document.getElementById('sidebar').classList.remove('open');
 }
 
@@ -180,6 +208,32 @@ function afficherPotager() {
             });
         });
         if(cards) container.innerHTML += `<div class="zone-box"><h3>ZONE ${zone.nom}</h3>${cards}</div>`;
+    });
+}
+
+function afficherTableauSQL() {
+    const body = document.getElementById('sql-body');
+    body.innerHTML = "";
+    monPotager.forEach((zone, zIdx) => {
+        zone.rangs.forEach((rang, rIdx) => {
+            rang.plantes.forEach((p, pIdx) => {
+                const tr = document.createElement('tr');
+                tr.style.cursor = "pointer";
+                tr.onclick = () => preparerEdition(zIdx, monPotager[zIdx].rangs.indexOf(rang), pIdx);
+                tr.innerHTML = `
+                    <td style="font-family:monospace; font-size:0.7em;">${p.id}</td>
+                    <td><b>${zone.nom}</b></td>
+                    <td>${rang.numero}</td>
+                    <td>${p.typeInit}</td>
+                    <td>${p.nom}</td>
+                    <td>${p.date || '-'}</td>
+                    <td>${p.dateLevee || '-'}</td>
+                    <td>${p.dateRecolte || '-'}</td>
+                    <td>${p.dateFin || '-'}</td>
+                `;
+                body.appendChild(tr);
+            });
+        });
     });
 }
 
@@ -253,33 +307,21 @@ function filtrer(type, val) { filtreActuel = { type, valeur: val }; toggleSideba
 
 function exportData() {
     const blob = new Blob([JSON.stringify(monPotager)], {type: "application/json"});
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "sauvegarde_potager_" + new Date().getTime() + ".json"; a.click();
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "backup_" + new Date().getTime() + ".json"; a.click();
 }
 
-// FONCTION IMPORTATION + ENREGISTREMENT GLOBAL
 function importAndSaveAll(e) {
-    if(!confirm("Une sauvegarde de vos données actuelles va être téléchargée avant l'importation. Continuer ?")) return;
-    
-    // 1. Export de sécurité avant import
+    if(!confirm("Sauvegarde auto avant import ?")) return;
     exportData();
-
     const reader = new FileReader();
     reader.onload = (ev) => { 
         try {
             const tempImport = JSON.parse(ev.target.result);
-            
-            // 2. Simulation d'enregistrement de masse
-            // On nettoie la base actuelle et on reconstruit proprement
             let nouveauPotager = [];
-            
             tempImport.forEach(zone => {
                 zone.rangs.forEach(rang => {
                     rang.plantes.forEach(p => {
-                        // On s'assure que chaque plante a un ID et un type valide
                         if(!p.id) p.id = Date.now() + Math.random();
-                        if(!p.typeInit) p.typeInit = "semis";
-                        
-                        // Placement dans la nouvelle structure
                         let z = nouveauPotager.find(x => x.nom === zone.nom);
                         if(!z){ z={nom: zone.nom, rangs:[]}; nouveauPotager.push(z); }
                         let r = z.rangs.find(x => x.numero === rang.numero);
@@ -288,18 +330,12 @@ function importAndSaveAll(e) {
                     });
                 });
             });
-
-            // 3. Enregistrement global
             monPotager = nouveauPotager;
             localStorage.setItem("data_potager", JSON.stringify(monPotager));
-            
-            // 4. Refresh complet
             afficherPotager();
             updateSidebar();
-            alert("Importation et enregistrement global réussis !");
-        } catch(err) {
-            alert("Le fichier JSON n'est pas valide.");
-        }
+            alert("Enregistré !");
+        } catch(err) { alert("Erreur JSON."); }
     };
     reader.readAsText(e.target.files[0]);
 }
