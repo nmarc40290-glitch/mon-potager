@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - Datas Enrichies</title>
+    <title>Mon Potager - SQL étendu</title>
     <style>
         :root { 
             --primary: #2e7d32; --primary-light: #e8f5e9; --accent: #4caf50; --danger: #d32f2f; 
@@ -15,10 +15,8 @@
         nav { background: var(--primary); color: white; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; flex-shrink: 0; }
         .nav-left { display: flex; align-items: center; gap: 15px; }
         .nav-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 0.8em; font-weight: bold; }
-        .nav-btn:hover { background: rgba(255,255,255,0.3); }
 
         .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
-        
         .sidebar { width: 260px; background: white; border-right: 1px solid #ddd; padding: 15px; overflow-y: auto; position: absolute; left: 0; top: 0; bottom: 0; transform: translateX(-100%); transition: 0.3s; z-index: 1100; box-shadow: 5px 0 15px rgba(0,0,0,0.1); }
         .sidebar.open { transform: translateX(0); }
         .sidebar-header { font-size: 0.75em; font-weight: 900; color: #666; margin-top: 15px; padding: 10px; background: #f0f0f0; border-radius: 5px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
@@ -29,15 +27,18 @@
         .section { display: none; padding: 15px; }
         .section.active { display: block; }
 
+        /* Style spécifique pour le tableau SQL large */
         .sql-table-container { width: 100%; overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85em; min-width: 900px; }
-        th { background: #34495e; color: white; padding: 12px; text-align: left; position: sticky; top: 0; }
-        td { padding: 10px; border-bottom: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.75em; min-width: 1200px; }
+        th { background: #34495e; color: white; padding: 10px; text-align: center; position: sticky; top: 0; }
+        th.text-left, td.text-left { text-align: left; }
+        td { padding: 8px; border-bottom: 1px solid #eee; text-align: center; }
         tr:hover { background: #f1f1f1; }
+        .col-mois { background: #fdfdfd; width: 30px; border-left: 1px solid #eee; font-weight: bold; color: var(--primary); }
 
-        .zone-box { background: white; margin-bottom: 20px; border-radius: 10px; border-left: 6px solid var(--primary); padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .plante-card { background: #fff; border: 1px solid #eee; margin: 8px 0; padding: 12px; border-radius: 8px; cursor: pointer; position: relative; min-height: 50px; }
-        .status-badge { float: right; font-size: 0.62em; padding: 4px 8px; border-radius: 4px; color: white; font-weight: bold; text-transform: uppercase; white-space: nowrap; margin-left: 5px; }
+        .zone-box { background: white; margin-bottom: 20px; border-radius: 10px; border-left: 6px solid var(--primary); padding: 10px; }
+        .plante-card { background: #fff; border: 1px solid #eee; margin: 8px 0; padding: 12px; border-radius: 8px; cursor: pointer; }
+        .status-badge { float: right; font-size: 0.62em; padding: 4px 8px; border-radius: 4px; color: white; font-weight: bold; }
         
         .st-bleu { background: var(--c-sous-terre); }
         .st-violet { background: var(--c-attente); }
@@ -46,11 +47,10 @@
 
         form { background: white; padding: 20px; border-radius: 12px; max-width: 500px; margin: 0 auto; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         label { display: block; font-size: 0.85em; font-weight: bold; margin-bottom: 5px; color: #555; }
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; margin-bottom: 12px; font-size: 16px; }
-        .mois-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; margin-bottom: 12px; }
+        .mois-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; background: #f9f9f9; padding: 10px; border-radius: 8px; }
 
-        .fab-add { position: fixed; bottom: 20px; right: 20px; background: var(--accent); color: white; border: none; border-radius: 50%; width: 60px; height: 60px; font-size: 35px; cursor: pointer; z-index: 1001; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .btn-io { width: 100%; padding: 10px; margin-top: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .fab-add { position: fixed; bottom: 20px; right: 20px; background: var(--accent); color: white; border: none; border-radius: 50%; width: 60px; height: 60px; font-size: 35px; cursor: pointer; z-index: 1001; }
     </style>
 </head>
 <body>
@@ -69,29 +69,27 @@
     <aside id="sidebar" class="sidebar">
         <a class="cat-link" style="font-weight:bold; background:var(--primary-light)" onclick="filtrer('tout', null)">📋 TOUT AFFICHER</a>
         <div id="sidebar-content"></div>
-        <hr style="margin-top:20px;">
-        <button class="btn-io" style="background:#eee;" onclick="exportData()">📤 EXPORTER JSON</button>
-        <button class="btn-io" style="background:#ffd7d7; color:#d32f2f;" onclick="document.getElementById('fileInput').click()">📥 IMPORTER (Sauvegarde auto)</button>
+        <hr>
+        <button class="nav-btn" style="background:#444; width:100%; margin-bottom:5px;" onclick="exportData()">📤 EXPORTER</button>
+        <button class="nav-btn" style="background:#d32f2f; width:100%;" onclick="document.getElementById('fileInput').click()">📥 IMPORTER</button>
         <input type="file" id="fileInput" style="display:none" onchange="importAndSaveAll(event)">
     </aside>
 
     <main class="content-area">
-        <div id="tab-liste" class="section active">
-            <div id="affichageDonnees"></div>
-        </div>
+        <div id="tab-liste" class="section active"><div id="affichageDonnees"></div></div>
 
         <div id="tab-sql" class="section">
             <div class="sql-table-container">
                 <table>
                     <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Zone</th>
+                        <tr id="sql-header-row">
+                            <!-- Les colonnes fixes -->
+                            <th class="text-left">Zone</th>
                             <th>Rang</th>
-                            <th>Légume</th>
-                            <th>Étiquette (Calculée)</th>
-                            <th>Date S/P</th>
-                            <th>Fin</th>
+                            <th class="text-left">Légume</th>
+                            <th>Statut</th>
+                            <th>S/P</th>
+                            <!-- Les colonnes mois seront injectées ici -->
                         </tr>
                     </thead>
                     <tbody id="sql-body"></tbody>
@@ -102,36 +100,24 @@
         <div id="tab-saisie" class="section">
             <form id="pForm">
                 <input type="hidden" id="edit-id">
-                <label>Type de culture</label>
+                <label>Type</label>
                 <select id="p_init" onchange="toggleLeveeField(this.value)">
-                    <option value="semis">🌱 Semis (Graines)</option>
-                    <option value="planter">🚜 Plantation (Plants)</option>
+                    <option value="semis">🌱 Semis</option>
+                    <option value="planter">🚜 Plantation</option>
                 </select>
-                
-                <label>Nom du légume</label>
-                <input type="text" id="p_nom" required placeholder="Ex: Tomate">
-                
+                <label>Nom</label><input type="text" id="p_nom" required>
                 <div style="display:flex; gap:10px;">
-                    <div style="flex:1;"><label>Zone</label><input type="text" id="p_zone" placeholder="Ex: A"></div>
+                    <div style="flex:1;"><label>Zone</label><input type="text" id="p_zone"></div>
                     <div style="flex:1;"><label>Rang</label><select id="p_rang"></select></div>
                 </div>
-
-                <label id="lbl_date_main">Date Semis</label><input type="date" id="p_date">
-                <div id="field-levee"><label>Date de levée</label><input type="date" id="p_date_levee"></div>
-                
-                <label>Date début récolte réelle</label><input type="date" id="p_date_recolte">
-                
+                <label id="lbl_date_main">Date</label><input type="date" id="p_date">
+                <div id="field-levee"><label>Date levée</label><input type="date" id="p_date_levee"></div>
+                <label>Récolte réelle</label><input type="date" id="p_date_recolte">
                 <label>Prévision Récolte (Mois)</label>
                 <div class="mois-grid" id="moisGrid"></div>
-                
-                <label>Date fin / Arrachage</label><input type="date" id="p_date_fin">
-
-                <div style="margin-top:20px; display:flex; flex-direction:column; gap:10px;">
-                    <button type="button" onclick="validerFormulaire()" style="background:var(--primary); color:white; padding:15px; border:none; border-radius:8px; font-weight:bold;">💾 ENREGISTRER</button>
-                    <button type="button" id="dup-btn" style="background:var(--c-sous-terre); color:white; padding:12px; border:none; border-radius:8px; display:none;" onclick="dupliquerPlante()">👯 DUPLIQUER</button>
-                    <button type="button" id="del-btn" style="color:var(--danger); background:none; border:none; font-weight:bold; display:none;" onclick="supprimerViaForm()">Supprimer la fiche</button>
-                    <button type="button" onclick="switchTab('tab-liste')" style="background:#ccc; padding:12px; border:none; border-radius:8px;">ANNULER</button>
-                </div>
+                <label>Fin</label><input type="date" id="p_date_fin">
+                <button type="button" onclick="validerFormulaire()" style="background:var(--primary); color:white; padding:15px; border:none; width:100%; border-radius:8px; font-weight:bold; margin-top:10px;">💾 ENREGISTRER</button>
+                <button type="button" onclick="switchTab('tab-liste')" style="background:#ccc; padding:10px; border:none; width:100%; border-radius:8px; margin-top:5px;">ANNULER</button>
             </form>
         </div>
     </main>
@@ -143,7 +129,7 @@ let filtreActuel = { type: 'tout', valeur: null };
 const MOIS_NOM = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
 const TODAY = new Date();
 
-// --- LOGIQUE MÉTIER ---
+// --- INIT ---
 const selectRang = document.getElementById('p_rang');
 for(let i=1; i<=30; i++) { 
     let o = document.createElement('option'); o.value = i; o.innerText = "Rang " + i; 
@@ -153,10 +139,18 @@ MOIS_NOM.forEach(m => {
     document.getElementById('moisGrid').innerHTML += `<div style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="mr" value="${m}"><span style="font-size:0.7em">${m}</span></div>`; 
 });
 
+// Injection des entêtes mois dans le tableau SQL
+const headerRow = document.getElementById('sql-header-row');
+MOIS_NOM.forEach(m => {
+    let th = document.createElement('th');
+    th.innerText = m;
+    th.style.fontSize = "0.7em";
+    headerRow.appendChild(th);
+});
+
 function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 function toggleLeveeField(v) { 
     document.getElementById('field-levee').style.display = (v === 'semis' ? 'block' : 'none'); 
-    document.getElementById('lbl_date_main').innerText = (v === 'semis' ? "Date Semis" : "Date Plantation"); 
 }
 
 function switchTab(tabId) {
@@ -167,24 +161,13 @@ function switchTab(tabId) {
     document.getElementById('sidebar').classList.remove('open');
 }
 
-// Fonction de calcul de l'étiquette
 function getStatutInfo(p, dateRef = TODAY) {
     const dStart = p.date ? new Date(p.date) : null;
-    const dLevee = p.dateLevee ? new Date(p.dateLevee) : null;
     const dRec = p.dateRecolte ? new Date(p.dateRecolte) : null;
-    const dFin = (p.dateFin && p.dateFin !== "Non définie" && p.dateFin !== "") ? new Date(p.dateFin) : null;
-    let typeLabel = (p.typeInit === 'semis') ? "Semis" : "Planté";
-
+    const dFin = (p.dateFin && p.dateFin !== "Non définie") ? new Date(p.dateFin) : null;
     if (dFin && dateRef >= dFin) return { text: "Fini", color: "gris" };
-    if (dRec && dateRef >= dRec) return { text: `${typeLabel} - Récolte`, color: "vert" };
-    
-    if (p.typeInit === 'semis') {
-        if (dLevee && dateRef >= dLevee) return { text: "Semis - Levé", color: "violet" };
-        if (dStart && dateRef >= dStart) return { text: "Semis - Sous terre", color: "bleu" };
-    } else {
-        if (dStart && dateRef >= dStart) return { text: "Planté - Croissance", color: "violet" };
-    }
-    return { text: "En cours", color: "bleu" };
+    if (dRec && dateRef >= dRec) return { text: "Récolte", color: "vert" };
+    return { text: "Croissance", color: "bleu" };
 }
 
 function afficherPotager() {
@@ -196,7 +179,7 @@ function afficherPotager() {
                 if (filtreActuel.type === 'tout' || (filtreActuel.type === 'nom' && filtreActuel.valeur === p.nom) || (filtreActuel.type === 'zone' && filtreActuel.valeur === zone.nom)) {
                     const info = getStatutInfo(p);
                     cards += `<div class="plante-card" onclick="preparerEdition(${zIdx},${monPotager[zIdx].rangs.indexOf(rang)},${pIdx})">
-                        <span class="status-badge st-${info.color}">${info.statut || info.text}</span>
+                        <span class="status-badge st-${info.color}">${p.statut || info.text}</span>
                         <strong>${p.nom}</strong><br><small>Zone ${zone.nom} - Rang ${rang.numero}</small>
                     </div>`;
                 }
@@ -214,15 +197,23 @@ function afficherTableauSQL() {
             rang.plantes.forEach((p, pIdx) => {
                 const tr = document.createElement('tr');
                 tr.onclick = () => preparerEdition(zIdx, monPotager[zIdx].rangs.indexOf(rang), pIdx);
-                tr.innerHTML = `
-                    <td style="font-family:monospace; font-size:0.7em;">${p.id}</td>
-                    <td><b>${zone.nom}</b></td>
+                
+                // Colonnes de base
+                let html = `
+                    <td class="text-left"><b>${zone.nom}</b></td>
                     <td>${rang.numero}</td>
-                    <td>${p.nom}</td>
-                    <td style="color:var(--primary); font-weight:bold;">${p.statut || 'Non calculé'}</td>
-                    <td>${p.date || '-'}</td>
-                    <td>${p.dateFin || '-'}</td>
+                    <td class="text-left">${p.nom}</td>
+                    <td><span style="font-size:0.8em">${p.statut || '-'}</span></td>
+                    <td>${p.date ? p.date.substring(5) : '-'}</td>
                 `;
+                
+                // Colonnes des mois (Données récolte prévisionnelle)
+                MOIS_NOM.forEach(m => {
+                    const isPrev = (p.recolte && p.recolte.includes(m));
+                    html += `<td class="col-mois">${isPrev ? '●' : ''}</td>`;
+                });
+
+                tr.innerHTML = html;
                 body.appendChild(tr);
             });
         });
@@ -241,10 +232,7 @@ function validerFormulaire() {
         dateFin: document.getElementById('p_date_fin').value || "Non définie",
         recolte: Array.from(document.querySelectorAll('input[name="mr"]:checked')).map(cb => cb.value)
     };
-    
-    // AJOUT DU CALCUL DANS LES DATAS AVANT ENREGISTREMENT
     p.statut = getStatutInfo(p).text;
-
     const zN = document.getElementById('p_zone').value.toUpperCase() || "A";
     const rN = document.getElementById('p_rang').value;
     saveIndividual(p, zN, rN);
@@ -262,9 +250,6 @@ function saveIndividual(p, zN, rN) {
 function ouvrirAjout() {
     document.getElementById('pForm').reset();
     document.getElementById('edit-id').value = "";
-    document.getElementById('dup-btn').style.display = 'none';
-    document.getElementById('del-btn').style.display = 'none';
-    toggleLeveeField('semis');
     switchTab('tab-saisie');
 }
 
@@ -273,17 +258,10 @@ function preparerEdition(zi, ri, pi) {
     ouvrirAjout();
     document.getElementById('edit-id').value = p.id;
     document.getElementById('p_nom').value = p.nom;
-    document.getElementById('p_init').value = p.typeInit || "semis";
     document.getElementById('p_zone').value = monPotager[zi].nom;
     document.getElementById('p_rang').value = monPotager[zi].rangs[ri].numero;
     document.getElementById('p_date').value = p.date || "";
-    document.getElementById('p_date_levee').value = p.dateLevee || "";
-    document.getElementById('p_date_recolte').value = p.dateRecolte || "";
-    document.getElementById('p_date_fin').value = (p.dateFin === "Non définie") ? "" : p.dateFin;
-    document.getElementById('dup-btn').style.display = 'block';
-    document.getElementById('del-btn').style.display = 'block';
     document.querySelectorAll('input[name="mr"]').forEach(cb => cb.checked = p.recolte.includes(cb.value));
-    toggleLeveeField(p.typeInit || "semis");
 }
 
 function updateSidebar() {
@@ -303,47 +281,22 @@ function filtrer(type, val) { filtreActuel = { type, valeur: val }; toggleSideba
 
 function exportData() {
     const blob = new Blob([JSON.stringify(monPotager)], {type: "application/json"});
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "potager_data.json"; a.click();
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "potager.json"; a.click();
 }
 
 function importAndSaveAll(e) {
-    if(!confirm("Sauvegarde auto avant import ?")) return;
-    exportData();
     const reader = new FileReader();
     reader.onload = (ev) => { 
-        try {
-            const tempImport = JSON.parse(ev.target.result);
-            let nouveauPotager = [];
-            tempImport.forEach(zone => {
-                zone.rangs.forEach(rang => {
-                    rang.plantes.forEach(p => {
-                        if(!p.id) p.id = Date.now() + Math.random();
-                        // On recalcule le statut à l'import si absent
-                        if(!p.statut) p.statut = getStatutInfo(p).text;
-                        
-                        let z = nouveauPotager.find(x => x.nom === zone.nom);
-                        if(!z){ z={nom: zone.nom, rangs:[]}; nouveauPotager.push(z); }
-                        let r = z.rangs.find(x => x.numero === rang.numero);
-                        if(!r){ r={numero: rang.numero, plantes:[]}; z.rangs.push(r); }
-                        r.plantes.push(p);
-                    });
-                });
-            });
-            monPotager = nouveauPotager;
-            localStorage.setItem("data_potager", JSON.stringify(monPotager));
-            afficherPotager();
-            updateSidebar();
-            alert("Données importées avec statuts mis à jour !");
-        } catch(err) { alert("Erreur JSON."); }
+        monPotager = JSON.parse(ev.target.result); 
+        localStorage.setItem("data_potager", JSON.stringify(monPotager)); 
+        afficherPotager(); 
     };
     reader.readAsText(e.target.files[0]);
 }
-
-function dupliquerPlante() { document.getElementById('edit-id').value = ""; validerFormulaire(); }
-function supprimerViaForm() { if(confirm("Supprimer ?")) { const id = parseInt(document.getElementById('edit-id').value); monPotager.forEach(z => z.rangs.forEach(r => r.plantes = r.plantes.filter(p => p.id !== id))); localStorage.setItem("data_potager", JSON.stringify(monPotager)); switchTab('tab-liste'); } }
 
 updateSidebar();
 afficherPotager();
 </script>
 </body>
 </html>
+
