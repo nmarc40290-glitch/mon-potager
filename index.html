@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - Version Stable avec Champs Libres</title>
+    <title>Mon Potager - Stable Fix</title>
     <style>
         :root { 
             --primary: #2e7d32; --primary-light: #e8f5e9; --accent: #4caf50; --danger: #d32f2f; 
@@ -28,7 +28,6 @@
         .section { display: none; padding: 15px; }
         .section.active { display: block; }
 
-        /* SQL Table */
         .sql-table-container { width: 100%; overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         table { width: 100%; border-collapse: collapse; font-size: 0.75em; min-width: 1000px; }
         th { background: #c0392b; color: white; padding: 12px; text-align: left; position: sticky; top: 0; white-space: nowrap; cursor: pointer; }
@@ -44,13 +43,41 @@
         .st-vert { background: var(--c-recolte); }
         .st-gris { background: var(--c-fini); }
 
-        /* Formulaire & Champs Libres */
         form { background: white; padding: 20px; border-radius: 12px; max-width: 500px; margin: 0 auto; }
         label { display: block; font-size: 0.85em; font-weight: bold; margin-bottom: 5px; color: #555; }
         input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; margin-bottom: 12px; font-size: 16px; }
-        .custom-field-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; background: #fefefe; padding: 10px; border: 1px dashed #ccc; border-radius: 6px; }
+        
+        /* Correction de la croix de suppression */
+        .custom-field-row { 
+            display: flex; 
+            gap: 10px; 
+            align-items: center; 
+            margin-bottom: 15px; 
+            background: #fff; 
+            padding: 12px; 
+            border: 1px dashed #ccc; 
+            border-radius: 8px; 
+        }
         .custom-field-row div { flex: 1; }
-        .btn-remove-field { background: none; border: none; color: var(--danger); font-size: 20px; cursor: pointer; padding-top: 30px; }
+        .custom-field-row label { font-size: 0.75em; margin-bottom: 2px; }
+        .custom-field-row input { margin-bottom: 0; }
+        .btn-remove-field { 
+            background: #ffebee; 
+            border: 1px solid #ffcdd2; 
+            color: var(--danger); 
+            font-size: 1.2em; 
+            cursor: pointer; 
+            width: 35px; 
+            height: 35px; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            margin-top: 15px; /* Aligne avec les inputs */
+            flex-shrink: 0;
+            transition: 0.2s;
+        }
+        .btn-remove-field:hover { background: var(--danger); color: white; }
 
         .mois-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
 
@@ -113,7 +140,7 @@
                 <input type="date" id="p_date_fin">
 
                 <div id="custom-fields-container"></div>
-                <button type="button" onclick="addCustomField()" style="background:#f0f0f0; border:1px solid #ccc; width:100%; padding:8px; border-radius:6px; cursor:pointer; margin-bottom:15px; font-size:0.8em; font-weight:bold;">+ AJOUTER UN CHAMP PERSONNALISÉ</button>
+                <button type="button" onclick="addCustomField()" style="background:#f0f0f0; border:1px solid #ccc; width:100%; padding:10px; border-radius:6px; cursor:pointer; margin-bottom:15px; font-size:0.85em; font-weight:bold; color:#444;">+ AJOUTER UN CHAMP PERSONNALISÉ</button>
 
                 <label>Notes / Observations</label>
                 <textarea id="p_notes" rows="3"></textarea>
@@ -133,7 +160,6 @@ let filtreActuel = { type: 'tout', valeur: null };
 const MOIS_NOM = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
 const TODAY = new Date();
 
-// Initialisation
 for(let i=1; i<=30; i++) { 
     let o = document.createElement('option'); o.value = i; o.innerText = "Rang " + i; 
     document.getElementById('p_rang').appendChild(o); 
@@ -156,7 +182,6 @@ function switchTab(tabId) {
     document.getElementById('sidebar').classList.remove('open');
 }
 
-// GESTION CHAMPS LIBRES
 function getAllExistingCustomKeys() {
     let keys = new Set();
     const protect = ['id', 'nom', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'dateFin', 'notes', 'recolte', 'statut'];
@@ -186,12 +211,11 @@ function addCustomField(key = "", value = "") {
             <label>Valeur</label>
             <input type="text" class="custom-val" placeholder="Ex: Mi-ombre" value="${value}">
         </div>
-        <button type="button" class="btn-remove-field" onclick="this.parentElement.remove()">×</button>
+        <button type="button" class="btn-remove-field" onclick="this.parentElement.remove()" title="Supprimer ce champ">×</button>
     `;
     container.appendChild(div);
 }
 
-// LOGIQUE MÉTIER
 function getStatutInfo(p) {
     const dStart = p.date ? new Date(p.date) : null;
     const dLevee = p.dateLevee ? new Date(p.dateLevee) : null;
@@ -267,7 +291,6 @@ function validerFormulaire() {
         recolte: Array.from(document.querySelectorAll('input[name="mr"]:checked')).map(cb => cb.value)
     };
     
-    // Ajout des champs personnalisés
     document.querySelectorAll('.custom-field-row').forEach(row => {
         const k = row.querySelector('.custom-key').value.trim();
         const v = row.querySelector('.custom-val').value.trim();
@@ -298,7 +321,6 @@ function editer(zi, ri, pi) {
     document.getElementById('p_notes').value = p.notes || "";
     document.querySelectorAll('input[name="mr"]').forEach(cb => cb.checked = (p.recolte||[]).includes(cb.value));
     
-    // Restaurer champs libres
     const protect = ['id', 'nom', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'dateFin', 'notes', 'recolte', 'statut'];
     Object.keys(p).forEach(k => { if(!protect.includes(k)) addCustomField(k, p[k]); });
 
@@ -336,16 +358,4 @@ function updateSidebar() {
     monPotager.forEach(z => { data.zones.add(z.nom); z.rangs.forEach(r => r.plantes.forEach(p => data.plantes.add(p.nom))); });
     const container = document.getElementById('sidebar-content'); container.innerHTML = "";
     const build = (titre, items, type, id) => {
-        let html = `<div class="sidebar-header" onclick="document.getElementById('${id}').classList.toggle('hidden')"><span>${titre}</span> ▾</div><div id="${id}" class="cat-content hidden">`;
-        Array.from(items).sort().forEach(v => html += `<a class="cat-link" onclick="filtrer('${type}', '${v}')">${v}</a>`);
-        container.innerHTML += html + `</div>`;
-    };
-    build("ZONES", data.zones, 'zone', 'side-z');
-    build("LÉGUMES", data.plantes, 'nom', 'side-l');
-}
-
-afficherPotager();
-updateSidebar();
-</script>
-</body>
-</html>
+      
