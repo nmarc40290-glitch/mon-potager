@@ -331,4 +331,25 @@ function exportJSON() {
 }
 function importJSON(event) {
     const reader = new FileReader();
-    reader.onload = (e) => { monPotager = JSON.parse(e.target.result); save(); location.rel
+    reader.onload = (e) => { monPotager = JSON.parse(e.target.result); save(); location.reload(); };
+    reader.readAsText(event.target.files[0]);
+}
+
+function updateSidebar() {
+    const zones = new Set(); const plantes = new Set();
+    monPotager.forEach(z => { zones.add(z.nom); z.rangs.forEach(r => r.plantes.forEach(p => plantes.add(p.nom))); });
+    const container = document.getElementById('sidebar-content'); container.innerHTML = "";
+    const build = (titre, items, type, id) => {
+        let html = `<div class="sidebar-header" onclick="document.getElementById('${id}').classList.toggle('hidden')"><span>${titre}</span> ▾</div><div id="${id}" class="cat-content hidden">`;
+        Array.from(items).sort().forEach(v => html += `<a class="cat-link" onclick="filtrer('${type}', '${v}')">${v}</a>`);
+        container.innerHTML += html + `</div>`;
+    };
+    build("ZONES", zones, 'zone', 'side-z');
+    build("LÉGUMES", plantes, 'nom', 'side-l');
+}
+
+afficherPotager();
+updateSidebar();
+</script>
+</body>
+</html>
