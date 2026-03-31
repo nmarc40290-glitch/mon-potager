@@ -207,17 +207,31 @@ function afficherPotager() {
 function afficherTableauSQL() {
     const head = document.getElementById('sql-head');
     const body = document.getElementById('sql-body');
-    let cles = new Set(['id', 'nom', 'zone', 'rang', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'dateFin']);
+    
+    // Définir les colonnes fixes et dynamiques
+    let clesFixes = ['id', 'nom', 'zone', 'rang', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'dateFin', 'notes'];
+    let clesDynamiques = new Set();
     
     monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
-        Object.keys(p).forEach(k => { if(!['recolte','statut'].includes(k)) cles.add(k); });
+        Object.keys(p).forEach(k => { 
+            if(!clesFixes.includes(k) && !['recolte','statut'].includes(k)) clesDynamiques.add(k); 
+        });
     })));
     
-    let colArr = Array.from(cles);
+    let colArr = [...clesFixes, ...Array.from(clesDynamiques)];
+    
     head.innerHTML = `<tr>${colArr.map(c => `<th onclick="nettoyerCol('${c}')">${c}</th>`).join('')}</tr>`;
     body.innerHTML = "";
+    
     monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
-        let row = colArr.map(c => `<td>${c==='zone'?z.nom:c==='rang'?r.numero:(p[c]||'-')}</td>`).join('');
+        let row = "";
+        colArr.forEach(c => {
+            let val = "-";
+            if (c === 'zone') val = z.nom;
+            else if (c === 'rang') val = r.numero;
+            else if (p[c] !== undefined && p[c] !== "") val = p[c];
+            row += `<td>${val}</td>`;
+        });
         body.innerHTML += `<tr onclick="editerDirect(${p.id})">${row}</tr>`;
     })));
 }
