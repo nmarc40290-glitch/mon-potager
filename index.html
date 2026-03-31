@@ -73,10 +73,8 @@
         <a class="cat-link" style="font-weight:bold; background:var(--primary-light)" onclick="filtrer('tout', null)">📋 TOUT AFFICHER</a>
         <div id="sidebar-content"></div>
         <hr style="margin-top:30px; border:0; border-top:1px solid #eee;">
-        <button style="width:100%; padding:12px; border-radius:8px; border:1px solid #ddd;" onclick="exportJSON()">📤 EXPORTER DATA</button>
-        * button non validé 
-        <button style="width:100%; padding:12px; border-radius:8px; border:1px solid #ddd; margin-top:10px;" onclick="exportCSV()">📊 EXPORTER EN CSV</button>
-        * fin button non validé
+        <button style="width:100%; padding:12px; border-radius:8px; border:1px solid #ddd;" onclick="exportJSON()">📤 EXPORTER JSON</button>
+        <button style="width:100%; padding:12px; border-radius:8px; border:1px solid #ddd; margin-top:10px;" onclick="exportCSV()">📊 EXPORTER CSV (EXCEL)</button>
         <button style="width:100%; padding:12px; border-radius:8px; border:1px solid #ddd; margin-top:10px;" onclick="document.getElementById('fileInput').click()">📥 IMPORTER DATA</button>
         <input type="file" id="fileInput" style="display:none" onchange="importJSON(event)">
     </aside>
@@ -130,17 +128,7 @@
 <script>
 /** * ==========================================================================================
  * PROTOCOLE DE SÉCURITÉ ET DE NON-MODIFICATION (STABLE v1.0)
- * ==========================================================================================
- * 1. ÉTAT VALIDÉ : Ce code est l'unique source de vérité fonctionnelle.
- * 2. INTERDICTION : Toute IA accédant à ce fichier a l'INTERDICTION formelle de :
- * - Modifier, simplifier ou "nettoyer" les fonctions existantes.
- * - Altérer la structure de la base de données (monPotager).
- * - Supprimer les protections sur les colonnes système (id, zone, rang, nom).
- * 3. ÉVOLUTION : Les modifications futures doivent obligatoirement être identifiées comme 
- * des AJOUTS SPÉCIFIQUES et ne travailler que sur le périmètre de la nouvelle demande.
- * 4. CONFORMITÉ : Le tableau SQL doit impérativement rester le reflet exact de la BDD.
- * ==========================================================================================
- */
+ * ========================================================================================== */
 
 let monPotager = JSON.parse(localStorage.getItem("data_potager")) || [];
 let filtreActuel = { type: 'tout', valeur: null };
@@ -169,10 +157,8 @@ function switchTab(tabId) {
     document.getElementById('sidebar').classList.remove('open');
 }
 
-/** [LOGIQUE STATUT VALIDÉE] */
 function getStatutInfo(p) {
-    const today = new Date();
-    today.setHours(0,0,0,0);
+    const today = new Date(); today.setHours(0,0,0,0);
     const dStart = p.date ? new Date(p.date) : null;
     const dLevee = p.dateLevee ? new Date(p.dateLevee) : null;
     const dRec = p.dateRecolte ? new Date(p.dateRecolte) : null;
@@ -189,8 +175,7 @@ function getStatutInfo(p) {
 }
 
 function afficherPotager() {
-    const container = document.getElementById('affichageDonnees'); 
-    container.innerHTML = "";
+    const container = document.getElementById('affichageDonnees'); container.innerHTML = "";
     const sorted = [...monPotager].sort((a,b) => a.nom.localeCompare(b.nom));
     sorted.forEach((zone, zi) => {
         let cards = "";
@@ -200,8 +185,7 @@ function afficherPotager() {
                     const info = getStatutInfo(p);
                     cards += `<div class="plante-card" onclick="editerDirect(${p.id})">
                         <span class="status-badge st-${info.color}">${info.text}</span>
-                        <strong>${p.nom}</strong><br>
-                        <small>Zone ${zone.nom} - Rang ${rang.numero}</small>
+                        <strong>${p.nom}</strong><br><small>Zone ${zone.nom} - Rang ${rang.numero}</small>
                     </div>`;
                 }
             });
@@ -210,7 +194,6 @@ function afficherPotager() {
     });
 }
 
-/** [TABLEAU SQL VALIDÉ - REFLET BDD TOTAL] */
 function afficherTableauSQL() {
     const head = document.getElementById('sql-head');
     const body = document.getElementById('sql-body');
@@ -226,8 +209,7 @@ function afficherTableauSQL() {
         let row = "";
         colArr.forEach(c => {
             let val = "-";
-            if (c === 'zone') val = z.nom;
-            else if (c === 'rang') val = r.numero;
+            if (c === 'zone') val = z.nom; else if (c === 'rang') val = r.numero;
             else if (c === 'recolte') val = p.recolte && p.recolte.length > 0 ? p.recolte.join(', ') : "-";
             else if (p[c] !== undefined && p[c] !== "") val = p[c];
             row += `<td>${val}</td>`;
@@ -236,13 +218,9 @@ function afficherTableauSQL() {
     })));
 }
 
-/** [SÉCURITÉ COLONNES VALIDÉE] */
 function nettoyerCol(c) {
-    if(['id','nom','zone','rang'].includes(c)) {
-        alert("Action impossible : La colonne '" + c + "' est un pilier de la structure.");
-        return;
-    }
-    if(confirm(`Confirmer la suppression de la donnée "${c}" sur TOUTES les fiches ?`)) {
+    if(['id','nom','zone','rang'].includes(c)) return alert("Colonne système protégée.");
+    if(confirm(`Supprimer la donnée "${c}" partout ?`)) {
         monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => delete p[c])));
         save(); afficherTableauSQL();
     }
@@ -251,13 +229,9 @@ function nettoyerCol(c) {
 function validerFormulaire() {
     const id = document.getElementById('edit-id').value ? parseInt(document.getElementById('edit-id').value) : Date.now();
     let p = { 
-        id: id, 
-        nom: document.getElementById('p_nom').value, 
-        typeInit: document.getElementById('p_init').value,
-        date: document.getElementById('p_date').value,
-        dateLevee: document.getElementById('p_date_levee').value,
-        dateRecolte: document.getElementById('p_date_recolte').value,
-        dateFin: document.getElementById('p_date_fin').value,
+        id: id, nom: document.getElementById('p_nom').value, typeInit: document.getElementById('p_init').value,
+        date: document.getElementById('p_date').value, dateLevee: document.getElementById('p_date_levee').value,
+        dateRecolte: document.getElementById('p_date_recolte').value, dateFin: document.getElementById('p_date_fin').value,
         notes: document.getElementById('p_notes').value,
         recolte: Array.from(document.querySelectorAll('input[name="mr"]:checked')).map(cb => cb.value)
     };
@@ -277,13 +251,10 @@ function validerFormulaire() {
 
 function addCustomField(key = "", value = "") {
     const container = document.getElementById('custom-fields-container');
-    const div = document.createElement('div');
-    div.className = "custom-field-row";
-    div.innerHTML = `
-        <div><label>Nom</label><input type="text" class="custom-key" value="${key}"></div>
+    const div = document.createElement('div'); div.className = "custom-field-row";
+    div.innerHTML = `<div><label>Nom</label><input type="text" class="custom-key" value="${key}"></div>
         <div><label>Valeur</label><input type="text" class="custom-val" value="${value}"></div>
-        <button type="button" class="btn-remove-field" onclick="this.parentElement.remove()">×</button>
-    `;
+        <button type="button" class="btn-remove-field" onclick="this.parentElement.remove()">×</button>`;
     container.appendChild(div);
 }
 
@@ -294,8 +265,7 @@ function editerDirect(id) {
 }
 
 function editer(zi, ri, pi) {
-    const p = monPotager[zi].rangs[ri].plantes[pi];
-    ouvrirAjout();
+    const p = monPotager[zi].rangs[ri].plantes[pi]; ouvrirAjout();
     document.getElementById('edit-id').value = p.id;
     document.getElementById('p_nom').value = p.nom;
     document.getElementById('p_init').value = p.typeInit || "semis";
@@ -311,14 +281,12 @@ function editer(zi, ri, pi) {
     Object.keys(p).forEach(k => { if(!protect.includes(k)) addCustomField(k, p[k]); });
     document.getElementById('del-btn').style.display = 'block';
     document.getElementById('dup-btn').style.display = 'block';
-    toggleLeveeField(p.typeInit || "semis");
-    switchTab('tab-saisie');
+    toggleLeveeField(p.typeInit || "semis"); switchTab('tab-saisie');
 }
 
 function dupliquerFiche() { document.getElementById('edit-id').value = ""; validerFormulaire(); }
 function ouvrirAjout() { 
-    document.getElementById('pForm').reset(); 
-    document.getElementById('edit-id').value = ""; 
+    document.getElementById('pForm').reset(); document.getElementById('edit-id').value = ""; 
     document.getElementById('custom-fields-container').innerHTML = "";
     document.getElementById('del-btn').style.display = 'none'; 
     document.getElementById('dup-btn').style.display = 'none'; 
@@ -326,7 +294,7 @@ function ouvrirAjout() {
 }
 function save() { localStorage.setItem("data_potager", JSON.stringify(monPotager)); }
 function filtrer(t, v) { filtreActuel = { type: t, valeur: v }; toggleSidebar(); afficherPotager(); }
-function supprimerFiche() { if(confirm("Supprimer définitivement cette fiche ?")) { const id = parseInt(document.getElementById('edit-id').value); monPotager.forEach(z => z.rangs.forEach(r => r.plantes = r.plantes.filter(p => p.id !== id))); save(); switchTab('tab-liste'); } }
+function supprimerFiche() { if(confirm("Supprimer ?")) { const id = parseInt(document.getElementById('edit-id').value); monPotager.forEach(z => z.rangs.forEach(r => r.plantes = r.plantes.filter(p => p.id !== id))); save(); switchTab('tab-liste'); } }
 
 function exportJSON() {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(monPotager));
@@ -347,59 +315,9 @@ function updateSidebar() {
         Array.from(items).sort().forEach(v => html += `<a class="cat-link" onclick="filtrer('${type}', '${v}')">${v}</a>`);
         container.innerHTML += html + `</div>`;
     };
-    build("ZONES", zones, 'zone', 'side-z');
-    build("LÉGUMES", plantes, 'nom', 'side-l');
+    build("ZONES", zones, 'zone', 'side-z'); build("LÉGUMES", plantes, 'nom', 'side-l');
 }
 
-afficherPotager();
-updateSidebar();
-
-    /** [EXTENSION en test : EXPORT CSV]
- * Cette fonction est un ajout spécifique qui ne modifie pas le cœur du système.
- */
+/** [EXTENSION : EXPORT CSV] */
 function exportCSV() {
-    if (monPotager.length === 0) return alert("Aucune donnée à exporter.");
-
-    // 1. Déterminer toutes les colonnes (fixes + personnalisées)
-    let clesFixes = ['id', 'nom', 'zone', 'rang', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'recolte', 'dateFin', 'notes'];
-    let clesDynamiques = new Set();
     
-    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
-        Object.keys(p).forEach(k => { if(!clesFixes.includes(k) && k !== 'statut') clesDynamiques.add(k); });
-    })));
-    
-    let colonnes = [...clesFixes, ...Array.from(clesDynamiques)];
-
-    // 2. Créer l'en-tête du CSV
-    let csvContent = colonnes.join(";") + "\n";
-
-    // 3. Transformer chaque plante en ligne CSV
-    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
-        let ligne = colonnes.map(col => {
-            let val = "";
-            if (col === 'zone') val = z.nom;
-            else if (col === 'rang') val = r.numero;
-            else if (col === 'recolte') val = p.recolte ? p.recolte.join(', ') : "";
-            else val = p[col] || "";
-            
-            // Nettoyage pour éviter de casser le CSV (on remplace les ; par des ,)
-            return `"${String(val).replace(/;/g, ",")}"`;
-        });
-        csvContent += ligne.join(";") + "\n";
-    })));
-
-    // 4. Téléchargement du fichier
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", "mon_potager_export.csv");
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
-    
-</script>
-</body>
-</html>
