@@ -320,4 +320,28 @@ function updateSidebar() {
 
 /** [EXTENSION : EXPORT CSV] */
 function exportCSV() {
-    
+    if (monPotager.length === 0) return alert("Aucune donnée.");
+    let clesFixes = ['id', 'nom', 'zone', 'rang', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'recolte', 'dateFin', 'notes'];
+    let clesDynamiques = new Set();
+    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
+        Object.keys(p).forEach(k => { if(!clesFixes.includes(k) && k !== 'statut') clesDynamiques.add(k); });
+    })));
+    let colonnes = [...clesFixes, ...Array.from(clesDynamiques)];
+    let csvContent = "\uFEFF" + colonnes.join(";") + "\n"; // BOM pour Excel
+    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
+        let ligne = colonnes.map(col => {
+            let val = (col === 'zone') ? z.nom : (col === 'rang') ? r.numero : (col === 'recolte' && p.recolte) ? p.recolte.join(', ') : p[col] || "";
+            return `"${String(val).replace(/"/g, '""').replace(/;/g, ',')}"`;
+        });
+        csvContent += ligne.join(";") + "\n";
+    })));
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a"); link.href = URL.createObjectURL(blob);
+    link.download = "mon_potager.csv"; link.click();
+}
+
+afficherPotager();
+updateSidebar();
+</script>
+</body>
+</html>
