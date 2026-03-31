@@ -55,7 +55,6 @@
         .fab-add { position: fixed; bottom: 25px; right: 25px; background: var(--accent); color: white; border: none; border-radius: 50%; width: 65px; height: 65px; font-size: 40px; cursor: pointer; z-index: 1001; box-shadow: 0 6px 12px rgba(0,0,0,0.3); }
         .btn-action { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 15px; }
         
-        /* Boutons d'options dans la barre latérale */
         .btn-side-opt { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; margin-top: 10px; cursor: pointer; font-weight: bold; background: white; transition: 0.2s; }
         .btn-side-opt:hover { background: #f0f0f0; }
     </style>
@@ -77,8 +76,6 @@
         <a class="cat-link" style="font-weight:bold; background:var(--primary-light)" onclick="filtrer('tout', null)">📋 TOUT AFFICHER</a>
         <div id="sidebar-content"></div>
         <hr style="margin-top:30px; border:0; border-top:1px solid #eee;">
-        
-        <!-- Section des exports et imports -->
         <button class="btn-side-opt" onclick="exportJSON()">📤 EXPORTER JSON</button>
         <button class="btn-side-opt" onclick="exportCSV()">📊 EXPORTER CSV (Excel)</button>
         <button class="btn-side-opt" onclick="document.getElementById('fileInput').click()">📥 IMPORTER DATA</button>
@@ -150,7 +147,6 @@ let monPotager = JSON.parse(localStorage.getItem("data_potager")) || [];
 let filtreActuel = { type: 'tout', valeur: null };
 const MOIS_NOM = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
 
-// Initialisation des options de rangs et de la grille des mois
 for(let i=1; i<=30; i++) { 
     let o = document.createElement('option'); o.value = i; o.innerText = "Rang " + i; 
     document.getElementById('p_rang').appendChild(o); 
@@ -173,7 +169,7 @@ function switchTab(tabId) {
     document.getElementById('sidebar').classList.remove('open');
 }
 
-/** [LOGIQUE STATUT VALIDÉE] */
+/** [LOGIQUE STATUT VALIDÉE AVEC CORRECTION COQUILLE] */
 function getStatutInfo(p) {
     const today = new Date();
     today.setHours(0,0,0,0);
@@ -181,13 +177,16 @@ function getStatutInfo(p) {
     const dLevee = p.dateLevee ? new Date(p.dateLevee) : null;
     const dRec = p.dateRecolte ? new Date(p.dateRecolte) : null;
     const dFin = p.dateFin ? new Date(p.dateFin) : null;
+    
     if (dFin && today >= dFin) return { text: "Fini", color: "gris" };
     if (dRec && today >= dRec) return { text: "Récolte", color: "vert" };
+    
     if (p.typeInit === 'semis') {
         if (dLevee && today >= dLevee) return { text: "Levé", color: "violet" };
         if (dStart && today >= dStart) return { text: "Sous terre", color: "bleu" };
     } else {
-        if (dStart && today >= dStart) return { text: "En cours", color: "violet" };
+        // Correction : Affiche "Planté" au lieu de "En cours" pour les types plantation
+        if (dStart && today >= dStart) return { text: "Planté", color: "violet" };
     }
     return { text: "En attente", color: "bleu" };
 }
@@ -214,7 +213,6 @@ function afficherPotager() {
     });
 }
 
-/** [TABLEAU SQL VALIDÉ - REFLET BDD TOTAL] */
 function afficherTableauSQL() {
     const head = document.getElementById('sql-head');
     const body = document.getElementById('sql-body');
@@ -240,7 +238,6 @@ function afficherTableauSQL() {
     })));
 }
 
-/** [SÉCURITÉ COLONNES VALIDÉE] */
 function nettoyerCol(c) {
     if(['id','nom','zone','rang'].includes(c)) {
         alert("Action impossible : La colonne '" + c + "' est un pilier de la structure.");
@@ -358,23 +355,16 @@ function updateSidebar() {
 /** 
  * [AJOUT SPÉCIFIQUE : EXPORT CSV CONFORME] 
  * Cette fonction génère un fichier CSV compatible Excel.
- * Elle extrait dynamiquement toutes les colonnes présentes dans la BDD.
  */
 function exportCSV() {
     if (monPotager.length === 0) { alert("Aucune donnée à exporter."); return; }
-    
-    // Détermination des colonnes (fixes + dynamiques)
     let clesFixes = ['id', 'nom', 'zone', 'rang', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'recolte', 'dateFin', 'notes'];
     let clesDynamiques = new Set();
     monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
         Object.keys(p).forEach(k => { if(!clesFixes.includes(k) && k !== 'statut') clesDynamiques.add(k); });
     })));
     let colArr = [...clesFixes, ...Array.from(clesDynamiques)];
-    
-    // Construction de l'en-tête CSV (avec BOM pour l'encodage UTF-8 sous Excel)
     let csv = "\uFEFF" + colArr.join(";") + "\n";
-    
-    // Parcours de la structure pour aplatir les données en lignes
     monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
         let ligne = colArr.map(c => {
             let v = "-";
@@ -382,13 +372,10 @@ function exportCSV() {
             else if (c === 'rang') v = r.numero;
             else if (c === 'recolte') v = p.recolte && p.recolte.length > 0 ? p.recolte.join(', ') : "-";
             else if (p[c] !== undefined && p[c] !== "") v = p[c];
-            // Échappement des guillemets pour éviter les erreurs de formatage CSV
             return `"${String(v).replace(/"/g, '""')}"`;
         });
         csv += ligne.join(";") + "\n";
     })));
-    
-    // Création et téléchargement du fichier
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     link.setAttribute("href", URL.createObjectURL(blob));
@@ -396,7 +383,6 @@ function exportCSV() {
     link.click();
 }
 
-// Lancement initial
 afficherPotager();
 updateSidebar();
 </script>
