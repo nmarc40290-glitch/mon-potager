@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - Version Originale Complète</title>
+    <title>Mon Potager - Version Complète Restaurée</title>
     <style>
         :root { 
             --primary: #2e7d32; --primary-light: #e8f5e9; --accent: #4caf50; --danger: #d32f2f; 
@@ -18,9 +18,12 @@
 
         .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
         
-        .sidebar { width: 260px; background: white; border-right: 1px solid #ddd; padding: 15px; overflow-y: auto; position: absolute; left: 0; top: 0; bottom: 0; transform: translateX(-100%); transition: 0.3s; z-index: 1100; box-shadow: 5px 0 15px rgba(0,0,0,0.1); }
+        /* SIDEBAR RESTAURÉE */
+        .sidebar { width: 280px; background: white; border-right: 1px solid #ddd; padding: 15px; overflow-y: auto; position: absolute; left: 0; top: 0; bottom: 0; transform: translateX(-100%); transition: 0.3s; z-index: 1100; box-shadow: 5px 0 15px rgba(0,0,0,0.1); }
         .sidebar.open { transform: translateX(0); }
-        .cat-link { display: block; padding: 12px 15px; color: #333; text-decoration: none; border-bottom: 1px solid #f9f9f9; cursor: pointer; font-size: 0.85em; }
+        .sidebar-header { font-size: 0.75em; font-weight: 900; color: #666; margin-top: 15px; padding: 10px; background: #f0f0f0; border-radius: 5px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .cat-content.hidden { display: none; }
+        .cat-link { display: block; padding: 10px 15px; color: #333; text-decoration: none; border-bottom: 1px solid #f9f9f9; cursor: pointer; font-size: 0.85em; }
         
         .content-area { flex: 1; overflow-y: auto; padding-bottom: 80px; }
         .section { display: none; padding: 15px; }
@@ -32,10 +35,10 @@
         th { background: #34495e; color: white; padding: 12px; text-align: left; position: sticky; top: 0; white-space: nowrap; }
         th.can-delete { background: #c0392b; cursor: pointer; }
         th.is-id { background: #1a1a1a; }
-        td { padding: 10px; border-bottom: 1px solid #eee; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+        td { padding: 10px; border-bottom: 1px solid #eee; white-space: nowrap; }
         tr:hover { background: #f9f9f9; cursor: pointer; }
 
-        /* Liste Visuel Original */
+        /* Liste Visuelle & Étiquettes */
         .zone-box { background: white; margin-bottom: 20px; border-radius: 10px; border-left: 6px solid var(--primary); padding: 10px; }
         .plante-card { background: #fff; border: 1px solid #eee; margin: 8px 0; padding: 12px; border-radius: 8px; cursor: pointer; }
         .status-badge { float: right; font-size: 0.65em; padding: 4px 8px; border-radius: 4px; color: white; font-weight: bold; text-transform: uppercase; }
@@ -45,13 +48,14 @@
         .st-gris { background: var(--c-fini); }
 
         /* Formulaire */
-        form { background: white; padding: 20px; border-radius: 12px; max-width: 500px; margin: 0 auto; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        form { background: white; padding: 20px; border-radius: 12px; max-width: 500px; margin: 0 auto; }
         label { display: block; font-size: 0.85em; font-weight: bold; margin-bottom: 5px; color: #555; }
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; margin-bottom: 12px; font-size: 16px; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; margin-bottom: 12px; font-size: 16px; }
         .mois-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
 
         .fab-add { position: fixed; bottom: 20px; right: 20px; background: var(--accent); color: white; border: none; border-radius: 50%; width: 60px; height: 60px; font-size: 35px; cursor: pointer; z-index: 1001; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .btn-action { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 8px; display: block; text-align: center; text-decoration: none; }
+        .btn-io { width: 100%; padding: 10px; margin-top: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -70,6 +74,11 @@
     <aside id="sidebar" class="sidebar">
         <a class="cat-link" style="font-weight:bold; background:var(--primary-light)" onclick="filtrer('tout', null)">📋 TOUT AFFICHER</a>
         <div id="sidebar-content"></div>
+        
+        <hr style="margin-top:30px; border:0; border-top:1px solid #eee;">
+        <button class="btn-io" style="background:#eee;" onclick="exportJSON()">📤 EXPORTER DATA</button>
+        <button class="btn-io" style="background:#ffd7d7; color:#d32f2f;" onclick="document.getElementById('fileInput').click()">📥 IMPORTER DATA</button>
+        <input type="file" id="fileInput" style="display:none" onchange="importJSON(event)">
     </aside>
 
     <main class="content-area">
@@ -129,8 +138,9 @@
 let monPotager = JSON.parse(localStorage.getItem("data_potager")) || [];
 let filtreActuel = { type: 'tout', valeur: null };
 const MOIS_NOM = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
+const TODAY = new Date();
 
-// Init
+// Init Form
 for(let i=1; i<=30; i++) { 
     let o = document.createElement('option'); o.value = i; o.innerText = "Rang " + i; 
     document.getElementById('p_rang').appendChild(o); 
@@ -153,12 +163,22 @@ function switchTab(tabId) {
     document.getElementById('sidebar').classList.remove('open');
 }
 
-function getStatut(p) {
-    const today = new Date();
-    const dFin = p.dateFin ? new Date(p.dateFin) : null;
+// LOGIQUE STATUT (FIX ÉTIQUETTES)
+function getStatutInfo(p) {
+    const dStart = p.date ? new Date(p.date) : null;
+    const dLevee = p.dateLevee ? new Date(p.dateLevee) : null;
     const dRec = p.dateRecolte ? new Date(p.dateRecolte) : null;
-    if (dFin && today >= dFin) return { text: "Fini", color: "gris" };
-    if (dRec && today >= dRec) return { text: "Récolte", color: "vert" };
+    const dFin = (p.dateFin && p.dateFin !== "") ? new Date(p.dateFin) : null;
+
+    if (dFin && TODAY >= dFin) return { text: "Fini", color: "gris" };
+    if (dRec && TODAY >= dRec) return { text: "Récolte", color: "vert" };
+    
+    if (p.typeInit === 'semis') {
+        if (dLevee && TODAY >= dLevee) return { text: "Levé", color: "violet" };
+        if (dStart && TODAY >= dStart) return { text: "Sous terre", color: "bleu" };
+    } else {
+        if (dStart && TODAY >= dStart) return { text: "Croissance", color: "violet" };
+    }
     return { text: "En cours", color: "bleu" };
 }
 
@@ -169,9 +189,9 @@ function afficherPotager() {
         zone.rangs.forEach((rang, ri) => {
             rang.plantes.forEach((p, pi) => {
                 if (filtreActuel.type === 'tout' || (filtreActuel.type === 'nom' && filtreActuel.valeur === p.nom) || (filtreActuel.type === 'zone' && filtreActuel.valeur === zone.nom)) {
-                    const st = getStatut(p);
+                    const info = getStatutInfo(p);
                     cards += `<div class="plante-card" onclick="editer(${zi},${monPotager[zi].rangs.indexOf(rang)},${pi})">
-                        <span class="status-badge st-${st.color}">${st.text}</span>
+                        <span class="status-badge st-${info.color}">${info.text}</span>
                         <strong>${p.nom}</strong><br><small>Zone ${zone.nom} - Rang ${rang.numero}</small>
                     </div>`;
                 }
@@ -200,14 +220,6 @@ function afficherTableauSQL() {
         }).join('');
         body.innerHTML += `<tr onclick="editer(${zi},${monPotager[zi].rangs.indexOf(r)},${pi})">${row}</tr>`;
     })));
-}
-
-function nettoyerCol(c) {
-    if(['id','nom','zone','rang','prevision_recolte'].includes(c)) return;
-    if(confirm(`Supprimer la colonne "${c}" ?`)) {
-        monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => delete p[c])));
-        save(); afficherTableauSQL();
-    }
 }
 
 function validerFormulaire() {
@@ -252,7 +264,7 @@ function editer(zi, ri, pi) {
 }
 
 function dupliquerFiche() {
-    document.getElementById('edit-id').value = ""; // Retire l'ID pour en créer un nouveau
+    document.getElementById('edit-id').value = ""; 
     validerFormulaire();
     alert("Fiche dupliquée !");
 }
@@ -262,13 +274,46 @@ function save() { localStorage.setItem("data_potager", JSON.stringify(monPotager
 function filtrer(t, v) { filtreActuel = { type: t, valeur: v }; toggleSidebar(); afficherPotager(); }
 function supprimerFiche() { if(confirm("Supprimer ?")) { const id = parseInt(document.getElementById('edit-id').value); monPotager.forEach(z => z.rangs.forEach(r => r.plantes = r.plantes.filter(p => p.id !== id))); save(); switchTab('tab-liste'); } }
 
+function exportJSON() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(monPotager));
+    const dlAnchorElem = document.createElement('a');
+    dlAnchorElem.setAttribute("href", dataStr);
+    dlAnchorElem.setAttribute("download", "mon_potager.json");
+    dlAnchorElem.click();
+}
+
+function importJSON(event) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        monPotager = JSON.parse(e.target.result);
+        save();
+        updateSidebar();
+        afficherPotager();
+    };
+    reader.readAsText(event.target.files[0]);
+}
+
+// SIDEBAR ACCORDÉON RESTAURÉ
 function updateSidebar() {
-    const cont = document.getElementById('sidebar-content'); cont.innerHTML = "";
-    let zones = new Set(); monPotager.forEach(z => zones.add(z.nom));
-    Array.from(zones).sort().forEach(z => cont.innerHTML += `<a class="cat-link" onclick="filtrer('zone','${z}')">ZONE ${z}</a>`);
+    const data = { zones: new Set(), plantes: new Set() };
+    monPotager.forEach(z => { 
+        data.zones.add(z.nom); 
+        z.rangs.forEach(r => r.plantes.forEach(p => data.plantes.add(p.nom))); 
+    });
+    const container = document.getElementById('sidebar-content'); container.innerHTML = "";
+    
+    const build = (titre, items, type, id) => {
+        let html = `<div class="sidebar-header" onclick="document.getElementById('${id}').classList.toggle('hidden')"><span>${titre}</span> ▾</div><div id="${id}" class="cat-content">`;
+        Array.from(items).sort().forEach(v => html += `<a class="cat-link" onclick="filtrer('${type}', '${v}')">${v}</a>`);
+        container.innerHTML += html + `</div>`;
+    };
+    
+    build("ZONES", data.zones, 'zone', 'side-z');
+    build("LÉGUMES", data.plantes, 'nom', 'side-l');
 }
 
 afficherPotager();
+updateSidebar();
 </script>
 </body>
 </html>
