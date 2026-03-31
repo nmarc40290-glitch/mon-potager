@@ -74,6 +74,9 @@
         <div id="sidebar-content"></div>
         <hr style="margin-top:30px; border:0; border-top:1px solid #eee;">
         <button style="width:100%; padding:12px; border-radius:8px; border:1px solid #ddd;" onclick="exportJSON()">📤 EXPORTER DATA</button>
+        * button non validé 
+        <button style="width:100%; padding:12px; border-radius:8px; border:1px solid #ddd; margin-top:10px;" onclick="exportCSV()">📊 EXPORTER EN CSV</button>
+        * fin button non validé
         <button style="width:100%; padding:12px; border-radius:8px; border:1px solid #ddd; margin-top:10px;" onclick="document.getElementById('fileInput').click()">📥 IMPORTER DATA</button>
         <input type="file" id="fileInput" style="display:none" onchange="importJSON(event)">
     </aside>
@@ -350,6 +353,53 @@ function updateSidebar() {
 
 afficherPotager();
 updateSidebar();
+
+    /** [EXTENSION en test : EXPORT CSV]
+ * Cette fonction est un ajout spécifique qui ne modifie pas le cœur du système.
+ */
+function exportCSV() {
+    if (monPotager.length === 0) return alert("Aucune donnée à exporter.");
+
+    // 1. Déterminer toutes les colonnes (fixes + personnalisées)
+    let clesFixes = ['id', 'nom', 'zone', 'rang', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'recolte', 'dateFin', 'notes'];
+    let clesDynamiques = new Set();
+    
+    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
+        Object.keys(p).forEach(k => { if(!clesFixes.includes(k) && k !== 'statut') clesDynamiques.add(k); });
+    })));
+    
+    let colonnes = [...clesFixes, ...Array.from(clesDynamiques)];
+
+    // 2. Créer l'en-tête du CSV
+    let csvContent = colonnes.join(";") + "\n";
+
+    // 3. Transformer chaque plante en ligne CSV
+    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
+        let ligne = colonnes.map(col => {
+            let val = "";
+            if (col === 'zone') val = z.nom;
+            else if (col === 'rang') val = r.numero;
+            else if (col === 'recolte') val = p.recolte ? p.recolte.join(', ') : "";
+            else val = p[col] || "";
+            
+            // Nettoyage pour éviter de casser le CSV (on remplace les ; par des ,)
+            return `"${String(val).replace(/;/g, ",")}"`;
+        });
+        csvContent += ligne.join(";") + "\n";
+    })));
+
+    // 4. Téléchargement du fichier
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", "mon_potager_export.csv");
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+    
 </script>
 </body>
 </html>
