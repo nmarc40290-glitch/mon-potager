@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - Gestion SQL Manuelle</title>
+    <title>Mon Potager - Nettoyage SQL Total</title>
     <style>
         :root { 
             --primary: #2e7d32; --primary-light: #e8f5e9; --accent: #4caf50; --danger: #d32f2f; 
@@ -28,23 +28,38 @@
         .section { display: none; padding: 15px; }
         .section.active { display: block; }
 
+        /* --- STYLE TABLEAU SQL NETTOYAGE --- */
         .sql-table-container { width: 100%; overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         table { width: 100%; border-collapse: collapse; font-size: 0.75em; min-width: 1100px; }
-        th { background: #34495e; color: white; padding: 12px; text-align: left; position: sticky; top: 0; white-space: nowrap; text-transform: uppercase; }
-        /* Style pour les colonnes supprimables */
-        th.removable { background: #c0392b; cursor: pointer; transition: 0.2s; }
-        th.removable:hover { background: #e74c3c; }
-        th.removable::after { content: " 🗑️"; font-size: 10px; opacity: 0.7; }
+        
+        th { background: #34495e; color: white; padding: 12px; text-align: left; position: sticky; top: 0; white-space: nowrap; text-transform: uppercase; border-right: 1px solid rgba(255,255,255,0.1); }
+        
+        /* Colonnes supprimables en ROUGE */
+        th.can-delete { background: #c0392b; cursor: pointer; }
+        th.can-delete:hover { background: #e74c3c; }
+        th.can-delete::after { content: " 🗑️"; font-size: 9px; opacity: 0.8; }
+        
+        /* Colonne ID protégée en NOIR */
+        th.is-id { background: #1a1a1a; cursor: default; }
 
         td { padding: 10px; border-bottom: 1px solid #eee; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
         tr:hover { background: #f1f1f1; cursor: pointer; }
+        .col-mois { text-align: center; font-weight: bold; color: var(--primary); width: 30px; border-left: 1px solid #f0f0f0; }
 
         .zone-box { background: white; margin-bottom: 20px; border-radius: 10px; border-left: 6px solid var(--primary); padding: 10px; }
         .plante-card { background: #fff; border: 1px solid #eee; margin: 8px 0; padding: 12px; border-radius: 8px; cursor: pointer; }
+        .status-badge { float: right; font-size: 0.65em; padding: 4px 8px; border-radius: 4px; color: white; font-weight: bold; }
+        
+        .st-bleu { background: var(--c-sous-terre); }
+        .st-violet { background: var(--c-attente); }
+        .st-vert { background: var(--c-recolte); }
+        .st-gris { background: var(--c-fini); }
 
         form { background: white; padding: 20px; border-radius: 12px; max-width: 500px; margin: 0 auto; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         label { display: block; font-size: 0.85em; font-weight: bold; margin-bottom: 5px; color: #555; }
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; margin-bottom: 12px; font-size: 16px; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; margin-bottom: 12px; font-size: 16px; font-family: inherit; }
+        textarea { height: 80px; resize: none; }
+        .mois-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
 
         .fab-add { position: fixed; bottom: 20px; right: 20px; background: var(--accent); color: white; border: none; border-radius: 50%; width: 60px; height: 60px; font-size: 35px; cursor: pointer; z-index: 1001; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .btn-io { width: 100%; padding: 10px; margin-top: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
@@ -76,9 +91,12 @@
         <div id="tab-liste" class="section active"><div id="affichageDonnees"></div></div>
         
         <div id="tab-sql" class="section">
-            <p style="font-size: 0.8em; color: #666; margin-bottom: 10px;">💡 Cliquez sur un en-tête <span style="color:red">rouge</span> pour supprimer la colonne dans toute la base.</p>
+            <div style="background:#fff3f3; padding:10px; border-radius:5px; border:1px solid #ffcccc; margin-bottom:15px;">
+                <strong style="color:var(--danger)">⚠️ MODE NETTOYAGE</strong><br>
+                <small>Cliquez sur n'importe quelle colonne <span style="color:red">rouge</span> pour la supprimer de toutes vos fiches. Seul l'ID est protégé.</small>
+            </div>
             <div class="sql-table-container">
-                <table>
+                <table id="main-sql-table">
                     <thead id="sql-head"></thead>
                     <tbody id="sql-body"></tbody>
                 </table>
@@ -88,19 +106,32 @@
         <div id="tab-saisie" class="section">
             <form id="pForm">
                 <input type="hidden" id="edit-id">
+                <label>Type de culture</label>
+                <select id="p_init" onchange="toggleLeveeField(this.value)">
+                    <option value="semis">🌱 Semis (Graines)</option>
+                    <option value="planter">🚜 Plantation (Plants)</option>
+                </select>
                 <label>Nom du légume</label>
                 <input type="text" id="p_nom" required>
-                
                 <div style="display:flex; gap:10px;">
                     <div style="flex:1;"><label>Zone</label><input type="text" id="p_zone" placeholder="Ex: A"></div>
-                    <div style="flex:1;"><label>Rang</label><input type="number" id="p_rang" value="1"></div>
+                    <div style="flex:1;"><label>Rang</label><select id="p_rang"></select></div>
                 </div>
-
+                <label id="lbl_date_main">Date Semis</label>
+                <input type="date" id="p_date">
+                <div id="field-levee"><label>Date de levée</label><input type="date" id="p_date_levee"></div>
+                <label>Date début récolte réelle</label>
+                <input type="date" id="p_date_recolte">
+                <label>Prévision Récolte (Mois)</label>
+                <div class="mois-grid" id="moisGrid"></div>
+                <label>Date fin / Arrachage</label>
+                <input type="date" id="p_date_fin">
                 <label>Notes / Observations</label>
-                <textarea id="p_notes"></textarea>
-
+                <textarea id="p_notes" placeholder="Commentaires..."></textarea>
                 <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
                     <button type="button" onclick="validerFormulaire()" style="background:var(--primary); color:white; padding:15px; border:none; border-radius:8px; font-weight:bold;">💾 ENREGISTRER</button>
+                    <button type="button" id="dup-btn" style="background:var(--c-sous-terre); color:white; padding:12px; border:none; border-radius:8px; font-weight:bold; display:none;" onclick="dupliquerPlante()">👯 DUPLIQUER</button>
+                    <button type="button" id="del-btn" style="color:var(--danger); background:none; border:none; font-weight:bold; display:none;" onclick="supprimerViaForm()">Supprimer la fiche</button>
                     <button type="button" onclick="switchTab('tab-liste')" style="background:#ccc; padding:12px; border:none; border-radius:8px;">ANNULER</button>
                 </div>
             </form>
@@ -111,8 +142,23 @@
 <script>
 let monPotager = JSON.parse(localStorage.getItem("data_potager")) || [];
 let filtreActuel = { type: 'tout', valeur: null };
+const MOIS_NOM = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
+const TODAY = new Date();
+
+// INITIALISATION
+for(let i=1; i<=30; i++) { 
+    let o = document.createElement('option'); o.value = i; o.innerText = "Rang " + i; 
+    document.getElementById('p_rang').appendChild(o); 
+}
+MOIS_NOM.forEach(m => { 
+    document.getElementById('moisGrid').innerHTML += `<div style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="mr" value="${m}"><span style="font-size:0.7em">${m}</span></div>`; 
+});
 
 function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+function toggleLeveeField(v) { 
+    document.getElementById('field-levee').style.display = (v === 'semis' ? 'block' : 'none'); 
+    document.getElementById('lbl_date_main').innerText = (v === 'semis' ? "Date Semis" : "Date Plantation"); 
+}
 
 function switchTab(tabId) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -122,93 +168,68 @@ function switchTab(tabId) {
     document.getElementById('sidebar').classList.remove('open');
 }
 
-// ==========================================
-//   GESTION DU TABLEAU SQL & SUPPRESSION
-// ==========================================
+// --- FONCTION DE SUPPRESSION GLOBALE PAR CLIC ---
+function supprimerColonneSpecifique(cle) {
+    if(cle.toLowerCase() === 'id') return; // Protection absolue de l'ID
+    if(!confirm(`Supprimer DEFINITIVEMENT la colonne "${cle}" de TOUTES les fiches du potager ?`)) return;
+
+    let total = 0;
+    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
+        if(p.hasOwnProperty(cle)) {
+            delete p[cle];
+            total++;
+        }
+    })));
+
+    localStorage.setItem("data_potager", JSON.stringify(monPotager));
+    afficherTableauSQL();
+    alert(`Terminé : ${total} fiches nettoyées.`);
+}
 
 function afficherTableauSQL() {
     const head = document.getElementById('sql-head');
     const body = document.getElementById('sql-body');
-    
-    // Détecter toutes les colonnes présentes dans les plantes
     let clesDetected = new Set();
+    
     monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
-        Object.keys(p).forEach(k => clesDetected.add(k));
+        Object.keys(p).forEach(k => { if(k !== 'recolte') clesDetected.add(k); });
     })));
 
-    let colArr = Array.from(clesDetected);
-    const vitales = ['id', 'nom', 'zone', 'rang', 'notes']; // Ne pas supprimer ces colonnes
+    let colArr = Array.from(clesDetected).sort((a,b) => (a==='id'?-1:b==='id'?1:a.localeCompare(b)));
 
-    // Générer En-tête
     let headHtml = "<tr>";
     colArr.forEach(c => {
-        if (vitales.includes(c)) {
-            headHtml += `<th>${c}</th>`;
-        } else {
-            headHtml += `<th class="removable" onclick="supprimerColonneGlobal('${c}')" title="Supprimer cette colonne">${c}</th>`;
-        }
+        const isId = (c.toLowerCase() === 'id');
+        headHtml += `<th class="${isId ? 'is-id' : 'can-delete'}" onclick="supprimerColonneSpecifique('${c}')">${c}</th>`;
     });
+    MOIS_NOM.forEach(m => headHtml += `<th style="text-align:center">${m.substring(0,1)}</th>`);
     headHtml += "</tr>";
     head.innerHTML = headHtml;
 
-    // Générer Corps
     body.innerHTML = "";
     monPotager.forEach((z, zi) => z.rangs.forEach((r, ri) => r.plantes.forEach((p, pi) => {
-        let rowHtml = `<tr onclick="preparerEdition(${zi}, ${monPotager[zi].rangs.indexOf(r)}, ${pi})">`;
+        const tr = document.createElement('tr');
+        tr.onclick = (e) => { if(e.target.tagName !== 'TH') preparerEdition(zi, monPotager[zi].rangs.indexOf(r), pi); };
+        let rowHtml = "";
         colArr.forEach(c => {
             let val = (c === 'zone') ? z.nom : (c === 'rang') ? r.numero : (p[c] || "-");
-            rowHtml += `<td>${val}</td>`;
+            rowHtml += `<td title="${val}">${val}</td>`;
         });
-        body.innerHTML += rowHtml + "</tr>";
+        MOIS_NOM.forEach(m => {
+            const hasRec = (p.recolte && p.recolte.includes(m));
+            rowHtml += `<td class="col-mois">${hasRec ? '●' : ''}</td>`;
+        });
+        tr.innerHTML = rowHtml;
+        body.appendChild(tr);
     })));
 }
 
-function supprimerColonneGlobal(nomCle) {
-    if (!confirm(`Supprimer la colonne "${nomCle}" de TOUTES les fiches légumes ?`)) return;
-
-    let count = 0;
-    monPotager.forEach(z => {
-        z.rangs.forEach(r => {
-            r.plantes.forEach(p => {
-                if (p.hasOwnProperty(nomCle)) {
-                    delete p[nomCle];
-                    count++;
-                }
-            });
-        });
-    });
-
-    localStorage.setItem("data_potager", JSON.stringify(monPotager));
-    afficherTableauSQL();
-    alert(`${count} entrées modifiées. La colonne "${nomCle}" a été supprimée.`);
-}
-
-// ==========================================
-//   LOGIQUE STANDARD (LISTE / SAISIE)
-// ==========================================
-
-function afficherPotager() {
-    const container = document.getElementById('affichageDonnees'); container.innerHTML = "";
-    monPotager.forEach((zone, zIdx) => {
-        let cards = "";
-        zone.rangs.forEach((rang) => {
-            rang.plantes.forEach((p, pIdx) => {
-                if (filtreActuel.type === 'tout' || (filtreActuel.type === 'nom' && filtreActuel.valeur === p.nom) || (filtreActuel.type === 'zone' && filtreActuel.valeur === zone.nom)) {
-                    cards += `<div class="plante-card" onclick="preparerEdition(${zIdx},${monPotager[zIdx].rangs.indexOf(rang)},${pIdx})">
-                        <strong>${p.nom}</strong><br><small>Zone ${zone.nom} - Rang ${rang.numero}</small>
-                    </div>`;
-                }
-            });
-        });
-        if(cards) container.innerHTML += `<div class="zone-box"><h3>ZONE ${zone.nom}</h3>${cards}</div>`;
-    });
-}
-
+// LOGIQUE FORMULAIRE (Reste identique à ton original)
 function validerFormulaire() {
     const nom = document.getElementById('p_nom').value; if(!nom) return;
     const id = document.getElementById('edit-id').value ? parseInt(document.getElementById('edit-id').value) : Date.now();
     
-    // Récupérer l'ancienne version pour garder les champs "invisibles"
+    // Garder les données invisibles lors de l'edit
     let p = { id: id };
     monPotager.forEach(z => z.rangs.forEach(r => {
         let found = r.plantes.find(x => x.id === id);
@@ -216,17 +237,20 @@ function validerFormulaire() {
     }));
 
     p.nom = nom;
+    p.typeInit = document.getElementById('p_init').value;
+    p.date = document.getElementById('p_date').value;
+    p.dateLevee = document.getElementById('p_date_levee').value;
+    p.dateRecolte = document.getElementById('p_date_recolte').value;
+    p.dateFin = document.getElementById('p_date_fin').value || "";
     p.notes = document.getElementById('p_notes').value;
-
+    p.recolte = Array.from(document.querySelectorAll('input[name="mr"]:checked')).map(cb => cb.value);
+    
     const zN = document.getElementById('p_zone').value.toUpperCase() || "A";
-    const rN = document.getElementById('p_rang').value || "1";
+    const rN = document.getElementById('p_rang').value;
     
-    // Retirer l'ancien
     monPotager.forEach(z => z.rangs.forEach(r => r.plantes = r.plantes.filter(x => x.id !== p.id)));
-    
-    // Ajouter au nouveau
     let z = monPotager.find(x => x.nom === zN); if(!z){z={nom:zN, rangs:[]}; monPotager.push(z);}
-    let r = z.rangs.find(x => x.numero == rN); if(!r){r={numero:rN, plantes:[]}; z.rangs.push(r);}
+    let r = z.rangs.find(x => x.numero === rN); if(!r){r={numero:rN, plantes:[]}; z.rangs.push(r);}
     r.plantes.push(p); 
     
     localStorage.setItem("data_potager", JSON.stringify(monPotager));
@@ -235,25 +259,45 @@ function validerFormulaire() {
 
 function preparerEdition(zi, ri, pi) {
     const p = monPotager[zi].rangs[ri].plantes[pi];
-    ouvrirAjout();
+    switchTab('tab-saisie');
     document.getElementById('edit-id').value = p.id;
     document.getElementById('p_nom').value = p.nom;
+    document.getElementById('p_init').value = p.typeInit || "semis";
     document.getElementById('p_zone').value = monPotager[zi].nom;
     document.getElementById('p_rang').value = monPotager[zi].rangs[ri].numero;
+    document.getElementById('p_date').value = p.date || "";
+    document.getElementById('p_date_levee').value = p.dateLevee || "";
+    document.getElementById('p_date_recolte').value = p.dateRecolte || "";
+    document.getElementById('p_date_fin').value = p.dateFin || "";
     document.getElementById('p_notes').value = p.notes || "";
+    document.getElementById('del-btn').style.display = 'block';
+    document.getElementById('dup-btn').style.display = 'block';
+    document.querySelectorAll('input[name="mr"]').forEach(cb => cb.checked = p.recolte.includes(cb.value));
+    toggleLeveeField(p.typeInit || "semis");
 }
 
 function ouvrirAjout() {
     document.getElementById('pForm').reset();
     document.getElementById('edit-id').value = "";
+    document.getElementById('del-btn').style.display = 'none';
+    document.getElementById('dup-btn').style.display = 'none';
+    toggleLeveeField('semis');
     switchTab('tab-saisie');
+}
+
+function supprimerViaForm() {
+    if(confirm("Supprimer ?")) {
+        const id = parseInt(document.getElementById('edit-id').value);
+        monPotager.forEach(z => z.rangs.forEach(r => r.plantes = r.plantes.filter(p => p.id !== id)));
+        localStorage.setItem("data_potager", JSON.stringify(monPotager));
+        switchTab('tab-liste');
+    }
 }
 
 function updateSidebar() {
     const data = { zones: new Set(), plantes: new Set() };
     monPotager.forEach(z => { data.zones.add(z.nom); z.rangs.forEach(r => r.plantes.forEach(p => data.plantes.add(p.nom))); });
     const container = document.getElementById('sidebar-content'); container.innerHTML = "";
-    
     const build = (titre, items, type, id) => {
         let html = `<div class="sidebar-header" onclick="document.getElementById('${id}').classList.toggle('hidden')"><span>${titre}</span></div><div id="${id}" class="cat-content hidden">`;
         Array.from(items).sort().forEach(v => html += `<a class="cat-link" onclick="filtrer('${type}', '${v}')">${v}</a>`);
@@ -278,6 +322,23 @@ function importAndSaveAll(e) {
         afficherPotager();
     };
     reader.readAsText(e.target.files[0]);
+}
+
+function afficherPotager() {
+    const container = document.getElementById('affichageDonnees'); container.innerHTML = "";
+    monPotager.forEach((zone, zIdx) => {
+        let cards = "";
+        zone.rangs.sort((a,b)=>a.numero - b.numero).forEach((rang) => {
+            rang.plantes.forEach((p, pIdx) => {
+                if (filtreActuel.type === 'tout' || (filtreActuel.type === 'nom' && filtreActuel.valeur === p.nom) || (filtreActuel.type === 'zone' && filtreActuel.valeur === zone.nom)) {
+                    cards += `<div class="plante-card" onclick="preparerEdition(${zIdx},${monPotager[zIdx].rangs.indexOf(rang)},${pIdx})">
+                        <strong>${p.nom}</strong><br><small>Zone ${zone.nom} - Rang ${rang.numero}</small>
+                    </div>`;
+                }
+            });
+        });
+        if(cards) container.innerHTML += `<div class="zone-box"><h3>ZONE ${zone.nom}</h3>${cards}</div>`;
+    });
 }
 
 updateSidebar();
