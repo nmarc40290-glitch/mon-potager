@@ -54,6 +54,9 @@
 
         .fab-add { position: fixed; bottom: 25px; right: 25px; background: var(--accent); color: white; border: none; border-radius: 50%; width: 65px; height: 65px; font-size: 40px; cursor: pointer; z-index: 1001; box-shadow: 0 6px 12px rgba(0,0,0,0.3); }
         .btn-action { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 15px; }
+        
+        /* Ajout spécifique CSS Export */
+        .btn-side-opt { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; margin-top: 10px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -73,8 +76,9 @@
         <a class="cat-link" style="font-weight:bold; background:var(--primary-light)" onclick="filtrer('tout', null)">📋 TOUT AFFICHER</a>
         <div id="sidebar-content"></div>
         <hr style="margin-top:30px; border:0; border-top:1px solid #eee;">
-        <button style="width:100%; padding:12px; border-radius:8px; border:1px solid #ddd;" onclick="exportJSON()">📤 EXPORTER DATA</button>
-        <button style="width:100%; padding:12px; border-radius:8px; border:1px solid #ddd; margin-top:10px;" onclick="document.getElementById('fileInput').click()">📥 IMPORTER DATA</button>
+        <button class="btn-side-opt" onclick="exportJSON()">📤 EXPORTER JSON</button>
+        <button class="btn-side-opt" onclick="exportCSV()">📊 EXPORTER CSV (Excel)</button>
+        <button class="btn-side-opt" onclick="document.getElementById('fileInput').click()">📥 IMPORTER DATA</button>
         <input type="file" id="fileInput" style="display:none" onchange="importJSON(event)">
     </aside>
 
@@ -346,6 +350,34 @@ function updateSidebar() {
     };
     build("ZONES", zones, 'zone', 'side-z');
     build("LÉGUMES", plantes, 'nom', 'side-l');
+}
+
+/** [AJOUT SPÉCIFIQUE : EXPORT CSV CONFORME] */
+function exportCSV() {
+    if (monPotager.length === 0) { alert("Aucune donnée à exporter."); return; }
+    let clesFixes = ['id', 'nom', 'zone', 'rang', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'recolte', 'dateFin', 'notes'];
+    let clesDynamiques = new Set();
+    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
+        Object.keys(p).forEach(k => { if(!clesFixes.includes(k) && k !== 'statut') clesDynamiques.add(k); });
+    })));
+    let colArr = [...clesFixes, ...Array.from(clesDynamiques)];
+    let csv = "\uFEFF" + colArr.join(";") + "\n"; // BOM pour Excel + séparateur point-virgule
+    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
+        let ligne = colArr.map(c => {
+            let v = "-";
+            if (c === 'zone') v = z.nom;
+            else if (c === 'rang') v = r.numero;
+            else if (c === 'recolte') v = p.recolte && p.recolte.length > 0 ? p.recolte.join(', ') : "-";
+            else if (p[c] !== undefined && p[c] !== "") v = p[c];
+            return `"${String(v).replace(/"/g, '""')}"`;
+        });
+        csv += ligne.join(";") + "\n";
+    })));
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.setAttribute("href", URL.createObjectURL(blob));
+    link.setAttribute("download", "mon_potager.csv");
+    link.click();
 }
 
 afficherPotager();
