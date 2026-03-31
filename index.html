@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - Stable Fix</title>
+    <title>Mon Potager - Stable Fix Final</title>
     <style>
         :root { 
             --primary: #2e7d32; --primary-light: #e8f5e9; --accent: #4caf50; --danger: #d32f2f; 
@@ -47,42 +47,40 @@
         label { display: block; font-size: 0.85em; font-weight: bold; margin-bottom: 5px; color: #555; }
         input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; margin-bottom: 12px; font-size: 16px; }
         
-        /* Correction de la croix de suppression */
+        /* CHAMPS LIBRES - CORRECTION VISUELLE */
         .custom-field-row { 
             display: flex; 
             gap: 10px; 
-            align-items: center; 
+            align-items: flex-end; 
             margin-bottom: 15px; 
-            background: #fff; 
-            padding: 12px; 
-            border: 1px dashed #ccc; 
+            background: #f9f9f9; 
+            padding: 10px; 
+            border: 1px dashed #bbb; 
             border-radius: 8px; 
         }
         .custom-field-row div { flex: 1; }
-        .custom-field-row label { font-size: 0.75em; margin-bottom: 2px; }
-        .custom-field-row input { margin-bottom: 0; }
+        .custom-field-row label { font-size: 0.7em; margin-bottom: 2px; color: #777; }
+        .custom-field-row input { margin-bottom: 0; padding: 8px; font-size: 14px; }
+        
         .btn-remove-field { 
             background: #ffebee; 
             border: 1px solid #ffcdd2; 
             color: var(--danger); 
-            font-size: 1.2em; 
+            font-size: 1.4em; 
             cursor: pointer; 
-            width: 35px; 
-            height: 35px; 
-            border-radius: 50%; 
+            width: 38px; 
+            height: 38px; 
+            border-radius: 6px; 
             display: flex; 
             align-items: center; 
             justify-content: center;
-            margin-top: 15px; /* Aligne avec les inputs */
             flex-shrink: 0;
-            transition: 0.2s;
         }
-        .btn-remove-field:hover { background: var(--danger); color: white; }
 
         .mois-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
 
         .fab-add { position: fixed; bottom: 20px; right: 20px; background: var(--accent); color: white; border: none; border-radius: 50%; width: 60px; height: 60px; font-size: 35px; cursor: pointer; z-index: 1001; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .btn-action { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 8px; display: block; text-align: center; }
+        .btn-action { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 8px; display: block; text-align: center; font-size: 14px; }
         .btn-io { width: 100%; padding: 10px; margin-top: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
@@ -139,8 +137,9 @@
                 <label>Date fin / Arrachage</label>
                 <input type="date" id="p_date_fin">
 
+                <!-- SECTION CHAMPS LIBRES -->
                 <div id="custom-fields-container"></div>
-                <button type="button" onclick="addCustomField()" style="background:#f0f0f0; border:1px solid #ccc; width:100%; padding:10px; border-radius:6px; cursor:pointer; margin-bottom:15px; font-size:0.85em; font-weight:bold; color:#444;">+ AJOUTER UN CHAMP PERSONNALISÉ</button>
+                <button type="button" onclick="addCustomField()" style="background:#e8f5e9; border:1px solid #4caf50; width:100%; padding:12px; border-radius:8px; cursor:pointer; margin-bottom:20px; font-size:0.9em; font-weight:bold; color:var(--primary);">+ AJOUTER UN CHAMP PERSONNALISÉ</button>
 
                 <label>Notes / Observations</label>
                 <textarea id="p_notes" rows="3"></textarea>
@@ -197,7 +196,8 @@ function addCustomField(key = "", value = "") {
     div.className = "custom-field-row";
     
     const existingKeys = getAllExistingCustomKeys();
-    let datalistHtml = `<datalist id="keys-list">`;
+    const listId = "list-" + Date.now();
+    let datalistHtml = `<datalist id="${listId}">`;
     existingKeys.forEach(k => datalistHtml += `<option value="${k}">`);
     datalistHtml += `</datalist>`;
     
@@ -205,13 +205,13 @@ function addCustomField(key = "", value = "") {
         ${datalistHtml}
         <div>
             <label>Nom du champ</label>
-            <input type="text" class="custom-key" list="keys-list" placeholder="Ex: Exposition" value="${key}">
+            <input type="text" class="custom-key" list="${listId}" placeholder="Ex: Variété" value="${key}">
         </div>
         <div>
             <label>Valeur</label>
-            <input type="text" class="custom-val" placeholder="Ex: Mi-ombre" value="${value}">
+            <input type="text" class="custom-val" placeholder="Ex: Cœur de bœuf" value="${value}">
         </div>
-        <button type="button" class="btn-remove-field" onclick="this.parentElement.remove()" title="Supprimer ce champ">×</button>
+        <button type="button" class="btn-remove-field" onclick="this.parentElement.remove()">×</button>
     `;
     container.appendChild(div);
 }
@@ -358,4 +358,16 @@ function updateSidebar() {
     monPotager.forEach(z => { data.zones.add(z.nom); z.rangs.forEach(r => r.plantes.forEach(p => data.plantes.add(p.nom))); });
     const container = document.getElementById('sidebar-content'); container.innerHTML = "";
     const build = (titre, items, type, id) => {
-      
+        let html = `<div class="sidebar-header" onclick="document.getElementById('${id}').classList.toggle('hidden')"><span>${titre}</span> ▾</div><div id="${id}" class="cat-content hidden">`;
+        Array.from(items).sort().forEach(v => html += `<a class="cat-link" onclick="filtrer('${type}', '${v}')">${v}</a>`);
+        container.innerHTML += html + `</div>`;
+    };
+    build("ZONES", data.zones, 'zone', 'side-z');
+    build("LÉGUMES", data.plantes, 'nom', 'side-l');
+}
+
+afficherPotager();
+updateSidebar();
+</script>
+</body>
+</html>
