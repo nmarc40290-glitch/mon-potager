@@ -1,9 +1,9 @@
-  <!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - Référence v1.5</title>
+    <title>Mon Potager - v1.5.0001</title>
     <style>
         :root { 
             --primary: #2e7d32; --primary-light: #e8f5e9; --accent: #4caf50; --danger: #d32f2f; 
@@ -12,8 +12,10 @@
         }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--bg); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text); }
         
-        nav { background: var(--primary); color: white; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; flex-shrink: 0; height: 50px; }
+        nav { background: var(--primary); color: white; padding: 0 15px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; flex-shrink: 0; height: 50px; }
         .nav-left { display: flex; align-items: center; gap: 10px; }
+        /* Style pour la version */
+        .nav-version { font-size: 0.65em; opacity: 0.8; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 4px; font-family: monospace; }
         
         .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
         
@@ -76,6 +78,7 @@
     <div class="nav-left">
         <div onclick="toggleSidebar()" style="cursor:pointer; font-weight:900; font-size: 1.1em;">☰ MENU POTAGER</div>
     </div>
+    <div class="nav-version">V.1.5.0001</div>
 </nav>
 
 <button class="fab-add" onclick="ouvrirAjout()">+</button>
@@ -220,16 +223,13 @@ function afficherPlanning() {
             const mEnd = new Date(ma.y, ma.m + 1, 0);
             let content = ""; let className = "";
 
-            // SECURITÉ : Verrou temporel (Pas d'affichage avant le mois de début)
             if (dStart && mEnd < new Date(dStart.getFullYear(), dStart.getMonth(), 1)) return `<td></td>`;
 
-            // 1. Gestion Arrachage
             if (dFin) {
                 if (ma.m === dFin.getMonth() && ma.y === dFin.getFullYear()) { content = "Arraché"; className = "c-fini"; }
                 else if (mStart > dFin) return `<td></td>`;
             }
 
-            // 2. Logique États réels
             if (!content) {
                 if (mEnd < today) {
                     if (dRec && dRec <= mEnd) { content = "Récolte"; className = "c-vert"; }
@@ -248,7 +248,6 @@ function afficherPlanning() {
                 }
             }
 
-            // 3. Superposition Prévisions
             if (content !== "Récolte" && content !== "Arraché") {
                 const isPrev = (p.recolte || []).includes(MOIS_NOM[ma.m]);
                 if (isPrev) {
