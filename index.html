@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - v1.5.0008</title>
+    <title>Mon Potager - v1.5.0011</title>
     <style>
         :root { 
             --primary: #2e7d32; --primary-light: #e8f5e9; --accent: #4caf50; --danger: #d32f2f; 
             --bg: #f4f9f4; --text: #2c3e50;
             --c-sous-terre: #2196f3; --c-attente: #9c27b0; --c-recolte: #1b5e20; --c-fini: #757575;
-            --c-prev: #fff9c4;
         }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--bg); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text); }
         
@@ -31,19 +30,18 @@
         .section { display: none; padding: 15px; }
         .section.active { display: block; }
 
-        /* Styles Planning corrigés */
+        /* Style Planning V1 */
         .planning-container { width: 100%; overflow-x: auto; background: white; border-radius: 8px; border: 1px solid #ddd; }
         .plan-table { border-collapse: collapse; min-width: 100%; font-size: 0.75em; }
         .plan-table th, .plan-table td { border: 1px solid #eee; padding: 6px; text-align: center; height: 45px; min-width: 90px; }
         .sticky-col { position: sticky; left: 0; background: #fff !important; z-index: 10; min-width: 150px; text-align: left !important; font-weight: bold; box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
         .month-header { background: var(--primary); color: white; }
         
-        /* Légende couleurs planning */
-        .plan-st { background: #e3f2fd; color: #1976d2; } /* Sous terre */
-        .plan-lv { background: #f3e5f5; color: #7b1fa2; } /* Levé / Planté */
-        .plan-rec { background: #e8f5e9; color: #2e7d32; font-weight: bold; } /* Récolte Réelle */
-        .plan-prv { background: #fff9c4; color: #fbc02d; border: 1px dashed #fbc02d; } /* Prévisionnel */
-        .plan-end { background: #f5f5f5; color: #9e9e9e; text-decoration: line-through; } /* Arraché */
+        /* Couleurs planning V1 */
+        .c-sous-terre { background: #2196f3; color: white; }
+        .c-violet { background: #9c27b0; color: white; }
+        .c-vert { background: #1b5e20; color: white; }
+        .c-prev { background: #fff9c4; color: #fbc02d; }
 
         .zone-box { background: white; margin-bottom: 20px; border-radius: 12px; border-left: 8px solid var(--primary); padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .plante-card { background: #fff; border: 1px solid #eee; margin: 10px 0; padding: 15px; border-radius: 10px; cursor: pointer; position: relative; }
@@ -78,7 +76,7 @@
     <div class="nav-left" onclick="toggleSidebar()">
         <span style="font-weight:900; font-size: 1.1em;">☰ MENU POTAGER</span>
     </div>
-    <div class="nav-version">V.1.5.0008</div>
+    <div class="nav-version">V.1.5.0011</div>
 </nav>
 
 <datalist id="list-custom-keys"></datalist>
@@ -92,29 +90,21 @@
         <div id="sidebar-content"></div>
         <hr style="margin-top:30px; border:0; border-top:1px solid #eee;">
         <button class="btn-side-opt" onclick="exportJSON()">📤 EXPORTER JSON</button>
-        <button class="btn-side-opt" onclick="exportCSV()">📊 EXPORTER CSV</button>
         <button class="btn-side-opt" onclick="document.getElementById('fileInput').click()">📥 IMPORTER DATA</button>
         <input type="file" id="fileInput" style="display:none" onchange="importJSON(event)">
     </aside>
 
     <main class="content-area">
         <div id="tab-liste" class="section active"><div id="affichageDonnees"></div></div>
-        <div id="tab-planning" class="section">
-            <div style="padding: 10px; font-size: 0.7em; background: #fff; margin-bottom: 10px; border-radius: 5px;">
-                <b>Légende:</b> <span style="color:#1976d2">ST</span>: Sous-terre | <span style="color:#7b1fa2">LV/PL</span>: Levé/Planté | <span style="color:#2e7d32">REC</span>: Récolte Réelle | <span style="background:#fff9c4">Prév</span>: Prévision
-            </div>
-            <div class="planning-container">
-                <table class="plan-table"><thead id="plan-head"></thead><tbody id="plan-body"></tbody></table>
-            </div>
-        </div>
+        <div id="tab-planning" class="section"><div class="planning-container"><table class="plan-table"><thead id="plan-head"></thead><tbody id="plan-body"></tbody></table></div></div>
         <div id="tab-sql" class="section"><div class="sql-table-container"><table><thead id="sql-head"></thead><tbody id="sql-body"></tbody></table></div></div>
         <div id="tab-saisie" class="section">
             <form id="pForm">
                 <input type="hidden" id="edit-id">
                 <label>Type de culture</label>
                 <select id="p_init" onchange="toggleLeveeField(this.value)">
-                    <option value="semis">🌱 Semis (Graines)</option>
-                    <option value="planter">🚜 Plantation (Plants)</option>
+                    <option value="semis">🌱 Semis</option>
+                    <option value="planter">🚜 Plantation</option>
                 </select>
                 <label>Nom du légume</label>
                 <input type="text" id="p_nom" required>
@@ -125,18 +115,17 @@
                 <label id="lbl_date_main">Date</label>
                 <input type="date" id="p_date">
                 <div id="field-levee"><label>Date de levée</label><input type="date" id="p_date_levee"></div>
-                <label>Date récolte réelle (Début)</label>
+                <label>Date récolte réelle</label>
                 <input type="date" id="p_date_recolte">
                 <label>Prévision Récolte (Mois)</label>
                 <div class="mois-grid" id="moisGrid"></div>
                 <label>Date fin / Arrachage</label>
                 <input type="date" id="p_date_fin">
                 <div id="custom-fields-container"></div>
-                <button type="button" onclick="addCustomField()" style="background:#e8f5e9; border:1px solid #4caf50; width:100%; padding:12px; border-radius:8px; cursor:pointer; margin-bottom:20px;">+ AJOUTER UN CHAMP PERSO</button>
-                <label>Notes</label>
-                <textarea id="p_notes" rows="3"></textarea>
+                <button type="button" onclick="addCustomField()" style="background:#e8f5e9; border:1px solid #4caf50; width:100%; padding:12px; border-radius:8px; cursor:pointer; margin-bottom:20px;">+ AJOUTER UN CHAMP</button>
+                <textarea id="p_notes" rows="3" placeholder="Notes..."></textarea>
                 <button type="button" class="btn-action" onclick="validerFormulaire()" style="background:var(--primary); color:white;">💾 ENREGISTRER</button>
-                <button type="button" id="del-btn" class="btn-action" style="background:none; color:var(--danger); display:none;" onclick="supprimerFiche()">Supprimer cette fiche</button>
+                <button type="button" id="del-btn" class="btn-action" style="background:none; color:var(--danger); display:none;" onclick="supprimerFiche()">Supprimer</button>
                 <button type="button" class="btn-action" onclick="switchTab('tab-liste')" style="background:#ccc;">ANNULER</button>
             </form>
         </div>
@@ -241,7 +230,7 @@ function afficherPotager() {
                             tags += `<span class="card-tag">${k.replace('Date','')}: ${k.endsWith('Date')?new Date(p[k]).toLocaleDateString('fr'):p[k]}</span>`;
                         }
                     });
-                    cards += `<div class="plante-card" onclick="editerDirect(${p.id})"><span class="status-badge st-${info.color}">${info.text}</span><strong>${p.nom}</strong><br><small>Zone ${zone.nom} - Rang ${rang.numero}</small><div style="margin-top:5px">${tags}</div></div>`;
+                    cards += `<div class="plante-card" onclick="editerDirect(${p.id})"><span class="status-badge st-${info.color}">${info.text}</span><strong>${p.nom}</strong><br><small>Z:${zone.nom} - R:${rang.numero}</small><div style="margin-top:5px">${tags}</div></div>`;
                 }
             });
         });
@@ -249,16 +238,19 @@ function afficherPotager() {
     });
 }
 
+// MOTEUR DE PLANNING V1 EXACT
 function afficherPlanning() {
     const head = document.getElementById('plan-head');
     const body = document.getElementById('plan-body');
     const today = new Date();
+    
+    // Grille 12 mois (historique inclus)
     let moisAffiche = []; 
-    for(let i=-2; i<=9; i++) {
+    for(let i=-5; i<=6; i++) {
         let d = new Date(today.getFullYear(), today.getMonth() + i, 1);
         moisAffiche.push({ m: d.getMonth(), y: d.getFullYear(), label: MOIS_NOM[d.getMonth()] + " " + String(d.getFullYear()).slice(-2) });
     }
-    head.innerHTML = `<tr><th class="sticky-col">Légume</th>${moisAffiche.map(ma => `<th class="month-header">${ma.label}</th>`).join('')}</tr>`;
+    head.innerHTML = `<tr><th class="sticky-col">Légume (Z-R)</th>${moisAffiche.map(ma => `<th class="month-header">${ma.label}</th>`).join('')}</tr>`;
     
     let toutesPlantes = [];
     monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => toutesPlantes.push({...p, zNom: z.nom, rNum: r.numero}))));
@@ -266,25 +258,26 @@ function afficherPlanning() {
 
     body.innerHTML = toutesPlantes.map(p => {
         let cells = moisAffiche.map(ma => {
-            const mDateStart = new Date(ma.y, ma.m, 1);
-            const mDateEnd = new Date(ma.y, ma.m + 1, 0);
-            const dStart = p.date ? new Date(p.date) : null;
-            const dLevee = p.dateLevee ? new Date(p.dateLevee) : null;
-            const dRec = p.dateRecolte ? new Date(p.dateRecolte) : null;
-            const dFin = p.dateFin ? new Date(p.dateFin) : null;
+            const mStart = new Date(ma.y, ma.m, 1);
+            const mEnd = new Date(ma.y, ma.m + 1, 0);
+            const dS = p.date ? new Date(p.date) : null;
+            const dL = p.dateLevee ? new Date(p.dateLevee) : null;
+            const dR = p.dateRecolte ? new Date(p.dateRecolte) : null;
+            const dF = p.dateFin ? new Date(p.dateFin) : null;
             const isPrev = (p.recolte || []).includes(MOIS_NOM[ma.m]);
 
             let cls = ""; let txt = "";
 
-            // LOGIQUE DE PRIORITÉ : Réel d'abord, Prévision ensuite
-            if (dFin && mDateStart > dFin) { cls = "plan-end"; txt = "OFF"; }
-            else if (dRec && mDateEnd >= dRec) { cls = "plan-rec"; txt = "REC"; }
-            else if (dStart && mDateEnd >= dStart) {
+            // LOGIQUE V1 : Priorité absolue aux dates réelles sur toute la ligne de temps
+            if (dF && mStart > dF) { cls = ""; txt = "-"; }
+            else if (dR && mEnd >= dR) { cls = "c-vert"; txt = "REC"; }
+            else if (dS && mEnd >= dS) {
                 if (p.typeInit === 'semis') {
-                    if (dLevee && mDateEnd >= dLevee) { cls = "plan-lv"; txt = "LV"; }
-                    else { cls = "plan-st"; txt = "ST"; }
-                } else { cls = "plan-lv"; txt = "PL"; }
-            } else if (isPrev) { cls = "plan-prv"; txt = "Prév"; }
+                    if (dL && mEnd >= dL) { cls = "c-violet"; txt = "LV"; }
+                    else { cls = "c-sous-terre"; txt = "ST"; }
+                } else { cls = "c-violet"; txt = "PL"; }
+            }
+            else if (isPrev) { cls = "c-prev"; txt = "Prév"; }
 
             return `<td class="${cls}">${txt}</td>`;
         }).join('');
