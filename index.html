@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - v1.5.0016</title>
+    <title>Mon Potager - v1.5.0017</title>
     <style>
         :root { 
             --primary: #2e7d32; --primary-light: #e8f5e9; --accent: #4caf50; --danger: #d32f2f; 
@@ -83,7 +83,6 @@
         label { display: block; font-size: 0.85em; font-weight: bold; margin-bottom: 5px; color: #555; }
         input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 15px; font-size: 16px; box-sizing: border-box; }
         
-        /* AJOUT V6 STYLE */
         .custom-field-row { display: flex; gap: 10px; align-items: center; margin-bottom: 15px; background: #fdfdfd; padding: 12px; border: 1px dashed #bbb; border-radius: 10px; position: relative;}
         .custom-field-row div { flex: 1; }
         .btn-remove-field { background: #ffebee; border: 1px solid #ffcdd2; color: var(--danger); font-size: 1.5em; cursor: pointer; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
@@ -102,7 +101,7 @@
     <div class="nav-left" onclick="toggleSidebar()">
         <span style="font-weight:900; font-size: 1.1em;">☰ MENU POTAGER</span>
     </div>
-    <div class="nav-version">V.1.5.0016</div>
+    <div class="nav-version">V.1.5.0017</div>
 </nav>
 
 <datalist id="list-custom-keys"></datalist>
@@ -186,7 +185,6 @@ let monPotager = JSON.parse(localStorage.getItem("data_potager")) || [];
 let filtreActuel = { type: 'tout', valeur: null };
 const MOIS_NOM = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
 
-// Initialisation V3
 for(let i=1; i<=30; i++) { 
     let o = document.createElement('option'); o.value = i; o.innerText = "Rang " + i; 
     document.getElementById('p_rang').appendChild(o); 
@@ -210,7 +208,6 @@ function switchTab(tabId) {
     document.getElementById('sidebar').classList.remove('open');
 }
 
-// LOGIQUE AJOUT V6 : CHAMPS ET DATES
 function addCustomField(key = "", value = "", type = "text") {
     const container = document.getElementById('custom-fields-container');
     const div = document.createElement('div'); div.className = "custom-field-row";
@@ -237,7 +234,6 @@ function updateDatalistSuggestions() {
     document.getElementById('list-custom-keys').innerHTML = Array.from(clesDyn).map(k => `<option value="${k}">`).join('');
 }
 
-// PLANNING V3 (NON MODIFIÉ)
 function afficherPlanning() {
     const head = document.getElementById('plan-head');
     const body = document.getElementById('plan-body');
@@ -315,12 +311,30 @@ function afficherPotager() {
     });
 }
 
+// RESTAURATION : NETTOYAGE COLONNE SQL
+function nettoyerCol(cle) {
+    const protected = ['id', 'nom', 'zone', 'rang', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'recolte', 'dateFin', 'notes'];
+    if (protected.includes(cle)) {
+        alert("Ce champ système ne peut pas être supprimé.");
+        return;
+    }
+    if (confirm("Supprimer la colonne '" + cle + "' et ses données sur toutes les fiches ?")) {
+        monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
+            delete p[cle];
+        })));
+        save();
+        afficherTableauSQL();
+    }
+}
+
 function afficherTableauSQL() {
     const head = document.getElementById('sql-head'); const body = document.getElementById('sql-body');
     let clesFixes = ['id', 'nom', 'zone', 'rang', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'recolte', 'dateFin', 'notes'];
     let clesDyn = new Set(); monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => Object.keys(p).forEach(k => { if(!clesFixes.includes(k) && k !== 'statut') clesDyn.add(k); }))));
     let colArr = [...clesFixes, ...Array.from(clesDyn)];
-    head.innerHTML = `<tr>${colArr.map(c => `<th>${c}</th>`).join('')}</tr>`;
+    
+    // RESTAURATION : ONCLICK SUR TH
+    head.innerHTML = `<tr>${colArr.map(c => `<th onclick="nettoyerCol('${c}')">${c}</th>`).join('')}</tr>`;
     body.innerHTML = "";
     monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
         let row = colArr.map(c => {
@@ -339,7 +353,6 @@ function validerFormulaire() {
         dateRecolte: document.getElementById('p_date_recolte').value, dateFin: document.getElementById('p_date_fin').value,
         notes: document.getElementById('p_notes').value, recolte: Array.from(document.querySelectorAll('input[name="mr"]:checked')).map(cb => cb.value)
     };
-    // Capture V6 Champs
     document.querySelectorAll('.custom-field-row').forEach(row => {
         let k = row.querySelector('.custom-key').value.trim(); const v = row.querySelector('.custom-val').value.trim();
         if(k) { if(row.querySelector('.custom-val').type === 'date' && !k.endsWith('Date')) k += "Date"; p[k] = v; }
@@ -367,7 +380,6 @@ function editer(zi, ri, pi) {
 }
 
 function dupliquerFiche() { document.getElementById('edit-id').value = ""; validerFormulaire(); }
-
 function ouvrirAjout() { 
     document.getElementById('pForm').reset(); document.getElementById('edit-id').value = ""; document.getElementById('custom-fields-container').innerHTML = "";
     document.getElementById('del-btn').style.display = 'none'; document.getElementById('dup-btn').style.display = 'none'; 
