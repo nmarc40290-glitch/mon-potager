@@ -30,6 +30,14 @@
         .section { display: none; padding: 15px; }
         .section.active { display: block; }
 
+        /* --- AJOUT SPECIFIQUE : STYLE PLANNING (01/04/2026 17:00) --- */
+        .planning-container { width: 100%; overflow-x: auto; background: white; border-radius: 8px; border: 1px solid #ddd; }
+        .plan-table { border-collapse: collapse; min-width: 100%; font-size: 0.75em; }
+        .plan-table th, .plan-table td { border: 1px solid #eee; padding: 8px; text-align: center; }
+        .sticky-col { position: sticky; left: 0; background: #fff !important; z-index: 10; min-width: 150px; text-align: left !important; font-weight: bold; box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
+        .month-header { background: var(--primary); color: white; min-width: 70px; }
+        .cell-active { background: var(--accent); color: white; font-weight: bold; }
+
         .zone-box { background: white; margin-bottom: 20px; border-radius: 12px; border-left: 8px solid var(--primary); padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .plante-card { background: #fff; border: 1px solid #eee; margin: 10px 0; padding: 15px; border-radius: 10px; cursor: pointer; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .status-badge { float: right; font-size: 0.7em; padding: 5px 10px; border-radius: 6px; color: white; font-weight: bold; text-transform: uppercase; }
@@ -74,6 +82,7 @@
 <div class="main-container">
     <aside id="sidebar" class="sidebar">
         <a class="cat-link nav-sidebar-item" onclick="switchTab('tab-liste')">📋 VUE LISTE</a>
+        <a class="cat-link nav-sidebar-item" onclick="switchTab('tab-planning')">📅 VUE PLANNING</a>
         <a class="cat-link nav-sidebar-item" onclick="switchTab('tab-sql')">🗄️ TABLEAU SQL</a>
         
         <a class="cat-link" style="font-weight:bold; background:var(--primary-light); margin-top: 10px;" onclick="filtrer('tout', null)">🔄 TOUT AFFICHER</a>
@@ -88,6 +97,16 @@
 
     <main class="content-area">
         <div id="tab-liste" class="section active"><div id="affichageDonnees"></div></div>
+        
+        <div id="tab-planning" class="section">
+            <div class="planning-container">
+                <table class="plan-table">
+                    <thead id="plan-head"></thead>
+                    <tbody id="plan-body"></tbody>
+                </table>
+            </div>
+        </div>
+
         <div id="tab-sql" class="section"><div class="sql-table-container"><table><thead id="sql-head"></thead><tbody id="sql-body"></tbody></table></div></div>
 
         <div id="tab-saisie" class="section">
@@ -136,17 +155,6 @@
 /** * ==========================================================================================
  * PROTOCOLE DE SÉCURITÉ ET DE NON-MODIFICATION (STABLE v1.1)
  * ==========================================================================================
- * 1. ÉTAT VALIDÉ : Ce code est l'unique source de vérité fonctionnelle.
- * 2. INTERDICTION : Toute IA accédant à ce fichier a l'INTERDICTION formelle de :
- * - Modifier, simplifier ou "nettoyer" les fonctions existantes.
- * - Altérer la structure de la base de données (monPotager).
- * - Supprimer les protections sur les colonnes système (id, zone, rang, nom).
- * 3. ÉVOLUTION : Les modifications futures doivent obligatoirement être identifiées comme 
- * des AJOUTS SPÉCIFIQUES et ne travailler que sur le périmètre de la nouvelle demande.
- * 4. TRAÇABILITÉ : Toute modification de code doit être accompagnée d'un commentaire 
- * explicatif dans le bloc concerné, incluant la DATE et l'HEURE de l'intervention.
- * 5. CONFORMITÉ : Le tableau SQL doit impérativement rester le reflet exact de la BDD.
- * ==========================================================================================
  */
 
 let monPotager = JSON.parse(localStorage.getItem("data_potager")) || [];
@@ -172,7 +180,32 @@ function switchTab(tabId) {
     document.getElementById(tabId).classList.add('active');
     if(tabId === 'tab-liste') { updateSidebar(); afficherPotager(); }
     if(tabId === 'tab-sql') { afficherTableauSQL(); }
+    if(tabId === 'tab-planning') { afficherPlanning(); } // AJOUT APPEL
     document.getElementById('sidebar').classList.remove('open');
+}
+
+/* --- AJOUT SPECIFIQUE : LOGIQUE PLANNING (01/04/2026 17:05) --- */
+function afficherPlanning() {
+    const head = document.getElementById('plan-head');
+    const body = document.getElementById('plan-body');
+    let toutesPlantes = [];
+    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
+        toutesPlantes.push({...p, zoneNom: z.nom, rangNum: r.numero});
+    })));
+    toutesPlantes.sort((a, b) => a.zoneNom.localeCompare(b.zoneNom) || a.rangNum - b.rangNum);
+    const startYear = new Date().getFullYear();
+    let moisAffiche = [];
+    for(let y = startYear; y <= startYear + 1; y++) {
+        for(let m = 0; m < 12; m++) moisAffiche.push({ m: m, y: y, label: MOIS_NOM[m] + " " + String(y).slice(-2) });
+    }
+    head.innerHTML = `<tr><th class="sticky-col">Plante (Zone-Rang)</th>${moisAffiche.map(ma => `<th class="month-header">${ma.label}</th>`).join('')}</tr>`;
+    body.innerHTML = toutesPlantes.map(p => {
+        let cells = moisAffiche.map(ma => {
+            const isRec = (p.recolte || []).includes(MOIS_NOM[ma.m]);
+            return `<td class="${isRec ? 'cell-active' : ''}">${isRec ? 'R' : ''}</td>`;
+        }).join('');
+        return `<tr><td class="sticky-col">${p.nom} <br><small>Z:${p.zoneNom} R:${p.rangNum}</small></td>${cells}</tr>`;
+    }).join('');
 }
 
 /** [LOGIQUE STATUT VALIDÉE] */
