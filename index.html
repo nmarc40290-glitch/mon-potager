@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - v1.5.0005</title>
+    <title>Mon Potager - v1.5.0006</title>
     <style>
         :root { 
             --primary: #2e7d32; --primary-light: #e8f5e9; --accent: #4caf50; --danger: #d32f2f; 
@@ -77,7 +77,7 @@
     <div class="nav-left" onclick="toggleSidebar()">
         <span style="font-weight:900; font-size: 1.1em;">☰ MENU POTAGER</span>
     </div>
-    <div class="nav-version">V.1.5.0005</div>
+    <div class="nav-version">V.1.5.0006</div>
 </nav>
 
 <datalist id="list-custom-keys"></datalist>
@@ -196,9 +196,11 @@ function updateDatalistSuggestions() {
 function addCustomField(key = "", value = "", type = "text") {
     const container = document.getElementById('custom-fields-container');
     const div = document.createElement('div'); div.className = "custom-field-row";
+    
     const isDate = type === 'date' || key.endsWith('Date');
     const baseKey = isDate ? key.replace('Date', '') : key;
     
+    // CORRECTION : On force l'affichage du bouton SI ce n'est pas une date, même en édition
     div.innerHTML = `
         <div class="cf-inputs">
             <div><label>Nom</label><input type="text" class="custom-key" list="list-custom-keys" value="${baseKey}"></div>
@@ -213,7 +215,6 @@ function addDateLink(btn) {
     const row = btn.closest('.custom-field-row');
     const key = row.querySelector('.custom-key').value.trim();
     if(!key) { alert("Saisissez d'abord un nom pour ce champ"); return; }
-    // Ajoute un nouveau champ de type date juste en dessous
     addCustomField(key + "Date", "", "date");
 }
 
