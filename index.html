@@ -12,18 +12,20 @@
         }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--bg); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text); }
         
-        nav { background: var(--primary); color: white; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; flex-shrink: 0; }
+        nav { background: var(--primary); color: white; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; flex-shrink: 0; height: 50px; }
         .nav-left { display: flex; align-items: center; gap: 10px; }
-        .nav-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 0.8em; font-weight: bold; }
-
+        
         .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
         
         .sidebar { width: 280px; background: white; border-right: 1px solid #ddd; padding: 15px; overflow-y: auto; position: absolute; left: 0; top: 0; bottom: 0; transform: translateX(-100%); transition: 0.3s; z-index: 1100; box-shadow: 5px 0 15px rgba(0,0,0,0.1); }
         .sidebar.open { transform: translateX(0); }
         .sidebar-header { font-size: 0.75em; font-weight: 900; color: #666; margin-top: 15px; padding: 10px; background: #f0f0f0; border-radius: 5px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .cat-content.hidden { display: none; }
-        .cat-link { display: block; padding: 10px 15px; color: #333; text-decoration: none; border-bottom: 1px solid #f9f9f9; cursor: pointer; font-size: 0.85em; }
+        .cat-link { display: block; padding: 12px 15px; color: #333; text-decoration: none; border-bottom: 1px solid #f9f9f9; cursor: pointer; font-size: 0.85em; }
         
+        /* Style spécifique pour les boutons de navigation dans la sidebar */
+        .nav-sidebar-item { background: #f8f9fa; border-left: 5px solid var(--primary); margin-bottom: 5px; font-weight: bold; }
+
         .content-area { flex: 1; overflow-y: auto; padding-bottom: 100px; }
         .section { display: none; padding: 15px; }
         .section.active { display: block; }
@@ -63,9 +65,7 @@
 
 <nav>
     <div class="nav-left">
-        <div onclick="toggleSidebar()" style="cursor:pointer; font-weight:900;">☰ MENU</div>
-        <button class="nav-btn" onclick="switchTab('tab-liste')">📋 LISTE</button>
-        <button class="nav-btn" onclick="switchTab('tab-sql')">🗄️ TABLEAU SQL</button>
+        <div onclick="toggleSidebar()" style="cursor:pointer; font-weight:900; font-size: 1.1em;">☰ MENU POTAGER</div>
     </div>
 </nav>
 
@@ -73,7 +73,11 @@
 
 <div class="main-container">
     <aside id="sidebar" class="sidebar">
-        <a class="cat-link" style="font-weight:bold; background:var(--primary-light)" onclick="filtrer('tout', null)">📋 TOUT AFFICHER</a>
+        <a class="cat-link nav-sidebar-item" onclick="switchTab('tab-liste')">📋 VUE LISTE</a>
+        <a class="cat-link nav-sidebar-item" onclick="switchTab('tab-sql')">🗄️ TABLEAU SQL</a>
+        
+        <a class="cat-link" style="font-weight:bold; background:var(--primary-light); margin-top: 10px;" onclick="filtrer('tout', null)">🔄 TOUT AFFICHER</a>
+        
         <div id="sidebar-content"></div>
         <hr style="margin-top:30px; border:0; border-top:1px solid #eee;">
         <button class="btn-side-opt" onclick="exportJSON()">📤 EXPORTER JSON</button>
@@ -187,7 +191,6 @@ function getStatutInfo(p) {
         if (dLevee && today >= dLevee) return { text: "Levé", color: "violet" };
         if (dStart && today >= dStart) return { text: "Sous terre", color: "bleu" };
     } else {
-        /** MODIFICATION DU 01/04/2026 à 05:31 : Changement du texte de statut "En cours" -> "Planté" pour le type plantation */
         if (dStart && today >= dStart) return { text: "Planté", color: "violet" };
     }
     return { text: "En attente", color: "bleu" };
@@ -354,9 +357,6 @@ function updateSidebar() {
     build("LÉGUMES", plantes, 'nom', 'side-l');
 }
 
-/** [LOGIQUE EXPORT CSV CONFORME] 
- * Modification du 01/04/2026 à 05:31 : Ajout de l'export CSV pour compatibilité Excel.
- */
 function exportCSV() {
     if (monPotager.length === 0) { alert("Aucune donnée à exporter."); return; }
     let clesFixes = ['id', 'nom', 'zone', 'rang', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'recolte', 'dateFin', 'notes'];
