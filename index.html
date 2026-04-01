@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - Référence 435 Lignes</title>
+    <title>Mon Potager - Référence v1.3</title>
     <style>
         :root { 
             --primary: #2e7d32; --primary-light: #e8f5e9; --accent: #4caf50; --danger: #d32f2f; 
@@ -29,7 +29,6 @@
         .section { display: none; padding: 15px; }
         .section.active { display: block; }
 
-        /* --- STYLE PLANNING OPTIMISÉ (v1.2) --- */
         .planning-container { width: 100%; overflow-x: auto; background: white; border-radius: 8px; border: 1px solid #ddd; }
         .plan-table { border-collapse: collapse; min-width: 100%; font-size: 0.75em; }
         .plan-table th, .plan-table td { border: 1px solid #eee; padding: 6px; text-align: center; height: 40px; }
@@ -185,30 +184,47 @@ function afficherPlanning() {
     const head = document.getElementById('plan-head');
     const body = document.getElementById('plan-body');
     const today = new Date(); today.setHours(0,0,0,0);
+    
     let toutesPlantes = [];
+    let dateMin = new Date(today.getFullYear(), 0, 1);
+
     monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
         toutesPlantes.push({...p, zoneNom: z.nom, rangNum: r.numero});
+        if (p.date) {
+            const d = new Date(p.date);
+            if (d < dateMin) dateMin = new Date(d.getFullYear(), d.getMonth(), 1);
+        }
     })));
+
     toutesPlantes.sort((a, b) => a.zoneNom.localeCompare(b.zoneNom) || a.rangNum - b.rangNum);
-    const startYear = today.getFullYear();
+
     let moisAffiche = [];
-    for(let y = startYear; y <= startYear + 1; y++) {
-        for(let m = 0; m < 12; m++) moisAffiche.push({ m: m, y: y, label: MOIS_NOM[m] + " " + String(y).slice(-2) });
+    let curDate = new Date(dateMin);
+    let endDate = new Date(today.getFullYear() + 1, 11, 31); // Fin de l'année N+1
+
+    while (curDate <= endDate) {
+        moisAffiche.push({ m: curDate.getMonth(), y: curDate.getFullYear(), label: MOIS_NOM[curDate.getMonth()] + " " + String(curDate.getFullYear()).slice(-2) });
+        curDate.setMonth(curDate.getMonth() + 1);
     }
+
     head.innerHTML = `<tr><th class="sticky-col">Plante (Zone-Rang)</th>${moisAffiche.map(ma => `<th class="month-header">${ma.label}</th>`).join('')}</tr>`;
+    
     body.innerHTML = toutesPlantes.map(p => {
         const dStart = p.date ? new Date(p.date) : null;
         const dLevee = p.dateLevee ? new Date(p.dateLevee) : null;
         const dRec = p.dateRecolte ? new Date(p.dateRecolte) : null;
         const dFin = p.dateFin ? new Date(p.dateFin) : null;
+
         let cells = moisAffiche.map(ma => {
             const mStart = new Date(ma.y, ma.m, 1);
             const mEnd = new Date(ma.y, ma.m + 1, 0);
             let content = ""; let className = "";
+
             if (dFin) {
                 if (ma.m === dFin.getMonth() && ma.y === dFin.getFullYear()) { content = "X"; className = "c-fini"; }
                 else if (mStart > dFin) return `<td></td>`;
             }
+
             if (!content) {
                 if (mEnd < today) {
                     if (dRec && dRec <= mEnd) { content = "R"; className = "c-vert"; }
@@ -225,6 +241,7 @@ function afficherPlanning() {
                     else if (info.text === "Sous terre") { content = "ST"; className = "c-sous-terre"; }
                 }
             }
+
             if (content !== "R" && content !== "X") {
                 const isPrev = (p.recolte || []).includes(MOIS_NOM[ma.m]);
                 if (isPrev) {
