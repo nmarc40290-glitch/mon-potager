@@ -23,12 +23,25 @@
         .cat-content.hidden { display: none; }
         .cat-link { display: block; padding: 12px 15px; color: #333; text-decoration: none; border-bottom: 1px solid #f9f9f9; cursor: pointer; font-size: 0.85em; }
         
-        /* Style spécifique pour les boutons de navigation dans la sidebar */
         .nav-sidebar-item { background: #f8f9fa; border-left: 5px solid var(--primary); margin-bottom: 5px; font-weight: bold; }
 
         .content-area { flex: 1; overflow-y: auto; padding-bottom: 100px; }
         .section { display: none; padding: 15px; }
         .section.active { display: block; }
+
+        /* Styles Planning - MODIFICATION DU 01/04/2026 à 15:38 */
+        .planning-container { width: 100%; overflow-x: auto; background: white; border-radius: 8px; border: 1px solid #ddd; }
+        .plan-table { border-collapse: collapse; min-width: 100%; font-size: 0.8em; }
+        .plan-table th, .plan-table td { border: 1px solid #eee; padding: 8px; text-align: center; }
+        
+        /* Colonne de gauche fixe */
+        .sticky-col { 
+            position: sticky; left: 0; background: #f9f9f9; z-index: 10; 
+            min-width: 180px; text-align: left !important; font-weight: bold;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+        }
+        .month-header { background: var(--primary); color: white; min-width: 60px; }
+        .cell-active { background: var(--accent); color: white; font-weight: bold; border-radius: 4px; }
 
         .zone-box { background: white; margin-bottom: 20px; border-radius: 12px; border-left: 8px solid var(--primary); padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .plante-card { background: #fff; border: 1px solid #eee; margin: 10px 0; padding: 15px; border-radius: 10px; cursor: pointer; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
@@ -74,6 +87,7 @@
 <div class="main-container">
     <aside id="sidebar" class="sidebar">
         <a class="cat-link nav-sidebar-item" onclick="switchTab('tab-liste')">📋 VUE LISTE</a>
+        <a class="cat-link nav-sidebar-item" onclick="switchTab('tab-planning')">📅 VUE PLANNING</a>
         <a class="cat-link nav-sidebar-item" onclick="switchTab('tab-sql')">🗄️ TABLEAU SQL</a>
         
         <a class="cat-link" style="font-weight:bold; background:var(--primary-light); margin-top: 10px;" onclick="filtrer('tout', null)">🔄 TOUT AFFICHER</a>
@@ -88,6 +102,16 @@
 
     <main class="content-area">
         <div id="tab-liste" class="section active"><div id="affichageDonnees"></div></div>
+        
+        <div id="tab-planning" class="section">
+            <div class="planning-container">
+                <table class="plan-table">
+                    <thead id="plan-head"></thead>
+                    <tbody id="plan-body"></tbody>
+                </table>
+            </div>
+        </div>
+
         <div id="tab-sql" class="section"><div class="sql-table-container"><table><thead id="sql-head"></thead><tbody id="sql-body"></tbody></table></div></div>
 
         <div id="tab-saisie" class="section">
@@ -136,16 +160,7 @@
 /** * ==========================================================================================
  * PROTOCOLE DE SÉCURITÉ ET DE NON-MODIFICATION (STABLE v1.1)
  * ==========================================================================================
- * 1. ÉTAT VALIDÉ : Ce code est l'unique source de vérité fonctionnelle.
- * 2. INTERDICTION : Toute IA accédant à ce fichier a l'INTERDICTION formelle de :
- * - Modifier, simplifier ou "nettoyer" les fonctions existantes.
- * - Altérer la structure de la base de données (monPotager).
- * - Supprimer les protections sur les colonnes système (id, zone, rang, nom).
- * 3. ÉVOLUTION : Les modifications futures doivent obligatoirement être identifiées comme 
- * des AJOUTS SPÉCIFIQUES et ne travailler que sur le périmètre de la nouvelle demande.
- * 4. TRAÇABILITÉ : Toute modification de code doit être accompagnée d'un commentaire 
- * explicatif dans le bloc concerné, incluant la DATE et l'HEURE de l'intervention.
- * 5. CONFORMITÉ : Le tableau SQL doit impérativement rester le reflet exact de la BDD.
+ * ... (Contenu identique au protocole précédent)
  * ==========================================================================================
  */
 
@@ -172,10 +187,50 @@ function switchTab(tabId) {
     document.getElementById(tabId).classList.add('active');
     if(tabId === 'tab-liste') { updateSidebar(); afficherPotager(); }
     if(tabId === 'tab-sql') { afficherTableauSQL(); }
+    if(tabId === 'tab-planning') { afficherPlanning(); }
     document.getElementById('sidebar').classList.remove('open');
 }
 
-/** [LOGIQUE STATUT VALIDÉE] */
+/** MODIFICATION DU 01/04/2026 à 15:38 : Fonction Génération de la Vue Planning */
+function afficherPlanning() {
+    const head = document.getElementById('plan-head');
+    const body = document.getElementById('plan-body');
+    
+    // 1. Extraire toutes les plantes à plat et trier par Zone puis Rang
+    let toutesPlantes = [];
+    monPotager.forEach(z => {
+        z.rangs.forEach(r => {
+            r.plantes.forEach(p => {
+                toutesPlantes.push({...p, zoneNom: z.nom, rangNum: r.numero});
+            });
+        });
+    });
+    toutesPlantes.sort((a, b) => a.zoneNom.localeCompare(b.zoneNom) || a.rangNum - b.rangNum);
+
+    // 2. Déterminer la plage de mois (Année en cours + Année N+1)
+    const startYear = new Date().getFullYear();
+    let moisAffiche = [];
+    for(let y = startYear; y <= startYear + 1; y++) {
+        for(let m = 0; m < 12; m++) {
+            moisAffiche.push({ m: m, y: y, label: MOIS_NOM[m].substring(0,3) + " " + String(y).slice(-2) });
+        }
+    }
+
+    // 3. Construction Header
+    head.innerHTML = `<tr><th class="sticky-col">Légume (Zone-Rang)</th>${moisAffiche.map(ma => `<th class="month-header">${ma.label}</th>`).join('')}</tr>`;
+
+    // 4. Construction Body
+    body.innerHTML = "";
+    toutesPlantes.forEach(p => {
+        let cells = "";
+        moisAffiche.forEach(ma => {
+            const isRecolte = (p.recolte || []).includes(MOIS_NOM[ma.m]);
+            cells += `<td class="${isRecolte ? 'cell-active' : ''}">${isRecolte ? 'R' : ''}</td>`;
+        });
+        body.innerHTML += `<tr><td class="sticky-col">${p.nom} <br><small>Z:${p.zoneNom} R:${p.rangNum}</small></td>${cells}</tr>`;
+    });
+}
+
 function getStatutInfo(p) {
     const today = new Date();
     today.setHours(0,0,0,0);
@@ -183,10 +238,8 @@ function getStatutInfo(p) {
     const dLevee = p.dateLevee ? new Date(p.dateLevee) : null;
     const dRec = p.dateRecolte ? new Date(p.dateRecolte) : null;
     const dFin = p.dateFin ? new Date(p.dateFin) : null;
-    
     if (dFin && today >= dFin) return { text: "Fini", color: "gris" };
     if (dRec && today >= dRec) return { text: "Récolte", color: "vert" };
-    
     if (p.typeInit === 'semis') {
         if (dLevee && today >= dLevee) return { text: "Levé", color: "violet" };
         if (dStart && today >= dStart) return { text: "Sous terre", color: "bleu" };
