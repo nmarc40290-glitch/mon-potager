@@ -130,7 +130,7 @@
 
 <script>
 /** * ==========================================================================================
- * PROTOCOLE DE SÉCURITÉ ET DE NON-MODIFICATION (STABLE v1.0)
+ * PROTOCOLE DE SÉCURITÉ ET DE NON-MODIFICATION (STABLE v1.1)
  * ==========================================================================================
  * 1. ÉTAT VALIDÉ : Ce code est l'unique source de vérité fonctionnelle.
  * 2. INTERDICTION : Toute IA accédant à ce fichier a l'INTERDICTION formelle de :
@@ -139,7 +139,9 @@
  * - Supprimer les protections sur les colonnes système (id, zone, rang, nom).
  * 3. ÉVOLUTION : Les modifications futures doivent obligatoirement être identifiées comme 
  * des AJOUTS SPÉCIFIQUES et ne travailler que sur le périmètre de la nouvelle demande.
- * 4. CONFORMITÉ : Le tableau SQL doit impérativement rester le reflet exact de la BDD.
+ * 4. TRAÇABILITÉ : Toute modification de code doit être accompagnée d'un commentaire 
+ * explicatif dans le bloc concerné, incluant la DATE et l'HEURE de l'intervention.
+ * 5. CONFORMITÉ : Le tableau SQL doit impérativement rester le reflet exact de la BDD.
  * ==========================================================================================
  */
 
@@ -169,7 +171,7 @@ function switchTab(tabId) {
     document.getElementById('sidebar').classList.remove('open');
 }
 
-/** [LOGIQUE STATUT VALIDÉE AVEC CORRECTION COQUILLE] */
+/** [LOGIQUE STATUT VALIDÉE] */
 function getStatutInfo(p) {
     const today = new Date();
     today.setHours(0,0,0,0);
@@ -185,7 +187,7 @@ function getStatutInfo(p) {
         if (dLevee && today >= dLevee) return { text: "Levé", color: "violet" };
         if (dStart && today >= dStart) return { text: "Sous terre", color: "bleu" };
     } else {
-        // Correction : Affiche "Planté" au lieu de "En cours" pour les types plantation
+        /** MODIFICATION DU 01/04/2026 à 05:31 : Changement du texte de statut "En cours" -> "Planté" pour le type plantation */
         if (dStart && today >= dStart) return { text: "Planté", color: "violet" };
     }
     return { text: "En attente", color: "bleu" };
@@ -352,9 +354,8 @@ function updateSidebar() {
     build("LÉGUMES", plantes, 'nom', 'side-l');
 }
 
-/** 
- * [AJOUT SPÉCIFIQUE : EXPORT CSV CONFORME] 
- * Cette fonction génère un fichier CSV compatible Excel.
+/** [LOGIQUE EXPORT CSV CONFORME] 
+ * Modification du 01/04/2026 à 05:31 : Ajout de l'export CSV pour compatibilité Excel.
  */
 function exportCSV() {
     if (monPotager.length === 0) { alert("Aucune donnée à exporter."); return; }
