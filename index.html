@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - v1.5.0001</title>
+    <title>Mon Potager - v1.5.0002</title>
     <style>
         :root { 
             --primary: #2e7d32; --primary-light: #e8f5e9; --accent: #4caf50; --danger: #d32f2f; 
@@ -12,10 +12,27 @@
         }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--bg); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text); }
         
-        nav { background: var(--primary); color: white; padding: 0 15px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; flex-shrink: 0; height: 50px; }
-        .nav-left { display: flex; align-items: center; gap: 10px; }
-        /* Style pour la version */
-        .nav-version { font-size: 0.65em; opacity: 0.8; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 4px; font-family: monospace; }
+        nav { 
+            background: var(--primary); 
+            color: white; 
+            padding: 0 15px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            z-index: 1000; 
+            flex-shrink: 0; 
+            height: 50px; 
+        }
+        .nav-left { display: flex; align-items: center; cursor: pointer; }
+        .nav-version { 
+            font-size: 0.7em; 
+            font-weight: bold;
+            background: rgba(0, 0, 0, 0.2); 
+            padding: 3px 8px; 
+            border-radius: 4px; 
+            font-family: monospace;
+            flex-shrink: 0;
+        }
         
         .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
         
@@ -45,12 +62,18 @@
         .c-prev-act { background: var(--c-attente); color: white; border-radius: 4px; font-weight: 900; text-decoration: underline; }
 
         .zone-box { background: white; margin-bottom: 20px; border-radius: 12px; border-left: 8px solid var(--primary); padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        
+        /* CARTES ENRICHIES */
         .plante-card { background: #fff; border: 1px solid #eee; margin: 10px 0; padding: 15px; border-radius: 10px; cursor: pointer; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .status-badge { float: right; font-size: 0.7em; padding: 5px 10px; border-radius: 6px; color: white; font-weight: bold; text-transform: uppercase; }
         .st-bleu { background: var(--c-sous-terre); }
         .st-violet { background: var(--c-attente); }
         .st-vert { background: var(--c-recolte); }
         .st-gris { background: var(--c-fini); }
+        
+        .card-details { margin-top: 8px; font-size: 0.8em; color: #555; border-top: 1px solid #f5f5f5; padding-top: 8px; }
+        .card-tag { display: inline-block; background: #f0f0f0; padding: 2px 6px; border-radius: 4px; margin-right: 5px; margin-bottom: 5px; font-size: 0.9em; color: #333; border: 1px solid #ddd; }
+        .card-note { font-style: italic; color: #777; margin-top: 5px; display: block; }
 
         .sql-table-container { width: 100%; overflow-x: auto; background: white; border-radius: 8px; }
         table { width: 100%; border-collapse: collapse; font-size: 0.75em; min-width: 1200px; }
@@ -75,10 +98,10 @@
 <body>
 
 <nav>
-    <div class="nav-left">
-        <div onclick="toggleSidebar()" style="cursor:pointer; font-weight:900; font-size: 1.1em;">☰ MENU POTAGER</div>
+    <div class="nav-left" onclick="toggleSidebar()">
+        <span style="font-weight:900; font-size: 1.1em;">☰ MENU POTAGER</span>
     </div>
-    <div class="nav-version">V.1.5.0001</div>
+    <div class="nav-version">V.1.5.0002</div>
 </nav>
 
 <button class="fab-add" onclick="ouvrirAjout()">+</button>
@@ -286,7 +309,26 @@ function afficherPotager() {
             rang.plantes.forEach((p, pi) => {
                 if (filtreActuel.type === 'tout' || (filtreActuel.type === 'nom' && filtreActuel.valeur === p.nom) || (filtreActuel.type === 'zone' && filtreActuel.valeur === zone.nom)) {
                     const info = getStatutInfo(p);
-                    cards += `<div class="plante-card" onclick="editerDirect(${p.id})"><span class="status-badge st-${info.color}">${info.text}</span><strong>${p.nom}</strong><br><small>Zone ${zone.nom} - Rang ${rang.numero}</small></div>`;
+                    
+                    // Construction dynamique des champs additionnels et notes
+                    let extraFields = "";
+                    const exclude = ['id', 'nom', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'dateFin', 'notes', 'recolte', 'statut'];
+                    Object.keys(p).forEach(k => {
+                        if(!exclude.includes(k)) {
+                            extraFields += `<span class="card-tag"><b>${k}:</b> ${p[k]}</span>`;
+                        }
+                    });
+
+                    let noteHtml = p.notes ? `<span class="card-note">📝 ${p.notes}</span>` : "";
+                    let detailSection = (extraFields || noteHtml) ? `<div class="card-details">${extraFields}${noteHtml}</div>` : "";
+
+                    cards += `
+                        <div class="plante-card" onclick="editerDirect(${p.id})">
+                            <span class="status-badge st-${info.color}">${info.text}</span>
+                            <strong>${p.nom}</strong><br>
+                            <small>Zone ${zone.nom} - Rang ${rang.numero}</small>
+                            ${detailSection}
+                        </div>`;
                 }
             });
         });
