@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - v1.5.0004</title>
+    <title>Mon Potager - v1.5.0005</title>
     <style>
         :root { 
             --primary: #2e7d32; --primary-light: #e8f5e9; --accent: #4caf50; --danger: #d32f2f; 
@@ -36,13 +36,6 @@
         .sticky-col { position: sticky; left: 0; background: #fff !important; z-index: 10; min-width: 150px; text-align: left !important; font-weight: bold; box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
         .month-header { background: var(--primary); color: white; }
         
-        .c-sous-terre { background: var(--c-sous-terre); color: white; border-radius: 4px; font-weight: 900; }
-        .c-violet { background: var(--c-attente); color: white; border-radius: 4px; font-weight: 900; }
-        .c-vert { background: var(--c-recolte); color: white; border-radius: 4px; font-weight: 900; }
-        .c-fini { background: var(--c-fini); color: white; border-radius: 4px; font-weight: 900; }
-        .c-prev { color: var(--accent); font-weight: bold; border: 1px dashed var(--accent); }
-        .c-prev-act { background: var(--c-attente); color: white; border-radius: 4px; font-weight: 900; text-decoration: underline; }
-
         .zone-box { background: white; margin-bottom: 20px; border-radius: 12px; border-left: 8px solid var(--primary); padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         
         .plante-card { background: #fff; border: 1px solid #eee; margin: 10px 0; padding: 15px; border-radius: 10px; cursor: pointer; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
@@ -84,7 +77,7 @@
     <div class="nav-left" onclick="toggleSidebar()">
         <span style="font-weight:900; font-size: 1.1em;">☰ MENU POTAGER</span>
     </div>
-    <div class="nav-version">V.1.5.0004</div>
+    <div class="nav-version">V.1.5.0005</div>
 </nav>
 
 <datalist id="list-custom-keys"></datalist>
@@ -200,10 +193,10 @@ function updateDatalistSuggestions() {
     document.getElementById('list-custom-keys').innerHTML = Array.from(clesDyn).map(k => `<option value="${k}">`).join('');
 }
 
-function addCustomField(key = "", value = "") {
+function addCustomField(key = "", value = "", type = "text") {
     const container = document.getElementById('custom-fields-container');
     const div = document.createElement('div'); div.className = "custom-field-row";
-    const isDate = key.endsWith('Date');
+    const isDate = type === 'date' || key.endsWith('Date');
     const baseKey = isDate ? key.replace('Date', '') : key;
     
     div.innerHTML = `
@@ -211,23 +204,17 @@ function addCustomField(key = "", value = "") {
             <div><label>Nom</label><input type="text" class="custom-key" list="list-custom-keys" value="${baseKey}"></div>
             <div><label>Valeur</label><input type="${isDate?'date':'text'}" class="custom-val" value="${value}"></div>
         </div>
-        <div>
-            <span class="btn-cf-opt" onclick="toggleDateOnField(this)">📅 ${isDate?'Passer en Texte':'Ajouter une Date'}</span>
-        </div>
+        ${!isDate ? `<div><span class="btn-cf-opt" onclick="addDateLink(this)">📅 Lier une Date</span></div>` : ''}
         <button type="button" class="btn-remove-field" onclick="this.parentElement.remove()">×</button>`;
     container.appendChild(div);
 }
 
-function toggleDateOnField(btn) {
+function addDateLink(btn) {
     const row = btn.closest('.custom-field-row');
-    const valInput = row.querySelector('.custom-val');
-    if(valInput.type === 'text') {
-        valInput.type = 'date';
-        btn.innerText = "📅 Passer en Texte";
-    } else {
-        valInput.type = 'text';
-        btn.innerText = "📅 Ajouter une Date";
-    }
+    const key = row.querySelector('.custom-key').value.trim();
+    if(!key) { alert("Saisissez d'abord un nom pour ce champ"); return; }
+    // Ajoute un nouveau champ de type date juste en dessous
+    addCustomField(key + "Date", "", "date");
 }
 
 function validerFormulaire() {
@@ -243,7 +230,7 @@ function validerFormulaire() {
         const v = row.querySelector('.custom-val').value.trim();
         const isDate = row.querySelector('.custom-val').type === 'date';
         if(k) {
-            if(isDate) k = k + "Date";
+            if(isDate && !k.endsWith('Date')) k = k + "Date";
             if(!['id','statut'].includes(k.toLowerCase())) p[k] = v;
         }
     });
