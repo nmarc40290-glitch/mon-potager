@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - v1.5.0003</title>
+    <title>Mon Potager - v1.5.0004</title>
     <style>
         :root { 
             --primary: #2e7d32; --primary-light: #e8f5e9; --accent: #4caf50; --danger: #d32f2f; 
@@ -12,27 +12,9 @@
         }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--bg); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text); }
         
-        nav { 
-            background: var(--primary); 
-            color: white; 
-            padding: 0 15px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            z-index: 1000; 
-            flex-shrink: 0; 
-            height: 50px; 
-        }
+        nav { background: var(--primary); color: white; padding: 0 15px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; flex-shrink: 0; height: 50px; }
         .nav-left { display: flex; align-items: center; cursor: pointer; }
-        .nav-version { 
-            font-size: 0.7em; 
-            font-weight: bold;
-            background: rgba(0, 0, 0, 0.2); 
-            padding: 3px 8px; 
-            border-radius: 4px; 
-            font-family: monospace;
-            flex-shrink: 0;
-        }
+        .nav-version { font-size: 0.7em; font-weight: bold; background: rgba(0, 0, 0, 0.2); padding: 3px 8px; border-radius: 4px; font-family: monospace; flex-shrink: 0; }
         
         .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
         
@@ -83,9 +65,11 @@
         label { display: block; font-size: 0.85em; font-weight: bold; margin-bottom: 5px; color: #555; }
         input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 15px; font-size: 16px; box-sizing: border-box; }
         
-        .custom-field-row { display: flex; gap: 10px; align-items: center; margin-bottom: 15px; background: #fdfdfd; padding: 12px; border: 1px dashed #bbb; border-radius: 10px; }
-        .custom-field-row div { flex: 1; }
-        .btn-remove-field { background: #ffebee; border: 1px solid #ffcdd2; color: var(--danger); font-size: 1.5em; cursor: pointer; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .custom-field-row { display: flex; flex-direction: column; gap: 5px; margin-bottom: 15px; background: #fdfdfd; padding: 12px; border: 1px dashed #bbb; border-radius: 10px; position: relative; }
+        .cf-inputs { display: flex; gap: 10px; align-items: flex-end; }
+        .cf-inputs div { flex: 1; }
+        .btn-cf-opt { background: #e3f2fd; border: 1px solid #2196f3; color: #2196f3; padding: 5px; border-radius: 5px; font-size: 12px; cursor: pointer; font-weight: bold; margin-top: 5px; display: inline-block; }
+        .btn-remove-field { position: absolute; top: -10px; right: -10px; background: white; border: 1px solid #ffcdd2; color: var(--danger); font-size: 1.2em; cursor: pointer; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
         .mois-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: #f9f9f9; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
 
@@ -100,7 +84,7 @@
     <div class="nav-left" onclick="toggleSidebar()">
         <span style="font-weight:900; font-size: 1.1em;">☰ MENU POTAGER</span>
     </div>
-    <div class="nav-version">V.1.5.0003</div>
+    <div class="nav-version">V.1.5.0004</div>
 </nav>
 
 <datalist id="list-custom-keys"></datalist>
@@ -184,7 +168,6 @@ let monPotager = JSON.parse(localStorage.getItem("data_potager")) || [];
 let filtreActuel = { type: 'tout', valeur: null };
 const MOIS_NOM = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
 
-// Initialisation
 for(let i=1; i<=30; i++) { 
     let o = document.createElement('option'); o.value = i; o.innerText = "Rang " + i; 
     document.getElementById('p_rang').appendChild(o); 
@@ -208,77 +191,76 @@ function switchTab(tabId) {
     document.getElementById('sidebar').classList.remove('open');
 }
 
-// Extraction des noms de champs personnalisés existants pour suggestions
 function updateDatalistSuggestions() {
     const clesFixes = ['id', 'nom', 'zone', 'rang', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'recolte', 'dateFin', 'notes', 'statut'];
     let clesDyn = new Set();
     monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
-        Object.keys(p).forEach(k => { if(!clesFixes.includes(k)) clesDyn.add(k); });
+        Object.keys(p).forEach(k => { if(!clesFixes.includes(k) && !k.endsWith('Date')) clesDyn.add(k); });
     })));
-    const dl = document.getElementById('list-custom-keys');
-    dl.innerHTML = Array.from(clesDyn).map(k => `<option value="${k}">`).join('');
+    document.getElementById('list-custom-keys').innerHTML = Array.from(clesDyn).map(k => `<option value="${k}">`).join('');
 }
 
 function addCustomField(key = "", value = "") {
     const container = document.getElementById('custom-fields-container');
     const div = document.createElement('div'); div.className = "custom-field-row";
-    // Utilisation de list="list-custom-keys" pour activer les suggestions
+    const isDate = key.endsWith('Date');
+    const baseKey = isDate ? key.replace('Date', '') : key;
+    
     div.innerHTML = `
-        <div><label>Nom</label><input type="text" class="custom-key" list="list-custom-keys" value="${key}" placeholder="Ex: Variété"></div>
-        <div><label>Valeur</label><input type="text" class="custom-val" value="${value}"></div>
+        <div class="cf-inputs">
+            <div><label>Nom</label><input type="text" class="custom-key" list="list-custom-keys" value="${baseKey}"></div>
+            <div><label>Valeur</label><input type="${isDate?'date':'text'}" class="custom-val" value="${value}"></div>
+        </div>
+        <div>
+            <span class="btn-cf-opt" onclick="toggleDateOnField(this)">📅 ${isDate?'Passer en Texte':'Ajouter une Date'}</span>
+        </div>
         <button type="button" class="btn-remove-field" onclick="this.parentElement.remove()">×</button>`;
     container.appendChild(div);
 }
 
-// ... (Le reste des fonctions d'affichage reste identique à la v1.5.0002) ...
-
-function afficherPlanning() {
-    const head = document.getElementById('plan-head');
-    const body = document.getElementById('plan-body');
-    const today = new Date(); today.setHours(0,0,0,0);
-    let toutesPlantes = [];
-    let dateMin = new Date(today.getFullYear(), 0, 1);
-    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
-        toutesPlantes.push({...p, zoneNom: z.nom, rangNum: r.numero});
-        if (p.date) { const d = new Date(p.date); if (d < dateMin) dateMin = new Date(d.getFullYear(), d.getMonth(), 1); }
-    })));
-    toutesPlantes.sort((a, b) => a.zoneNom.localeCompare(b.zoneNom) || a.rangNum - b.rangNum);
-    let moisAffiche = []; let curDate = new Date(dateMin); let endDate = new Date(today.getFullYear() + 1, 11, 31);
-    while (curDate <= endDate) {
-        moisAffiche.push({ m: curDate.getMonth(), y: curDate.getFullYear(), label: MOIS_NOM[curDate.getMonth()] + " " + String(curDate.getFullYear()).slice(-2) });
-        curDate.setMonth(curDate.getMonth() + 1);
+function toggleDateOnField(btn) {
+    const row = btn.closest('.custom-field-row');
+    const valInput = row.querySelector('.custom-val');
+    if(valInput.type === 'text') {
+        valInput.type = 'date';
+        btn.innerText = "📅 Passer en Texte";
+    } else {
+        valInput.type = 'text';
+        btn.innerText = "📅 Ajouter une Date";
     }
-    head.innerHTML = `<tr><th class="sticky-col">Plante (Zone-Rang)</th>${moisAffiche.map(ma => `<th class="month-header">${ma.label}</th>`).join('')}</tr>`;
-    body.innerHTML = toutesPlantes.map(p => {
-        const dStart = p.date ? new Date(p.date) : null; const dLevee = p.dateLevee ? new Date(p.dateLevee) : null;
-        const dRec = p.dateRecolte ? new Date(p.dateRecolte) : null; const dFin = p.dateFin ? new Date(p.dateFin) : null;
-        let cells = moisAffiche.map(ma => {
-            const mStart = new Date(ma.y, ma.m, 1); const mEnd = new Date(ma.y, ma.m + 1, 0);
-            let content = ""; let className = "";
-            if (dStart && mEnd < new Date(dStart.getFullYear(), dStart.getMonth(), 1)) return `<td></td>`;
-            if (dFin) { if (ma.m === dFin.getMonth() && ma.y === dFin.getFullYear()) { content = "Arraché"; className = "c-fini"; } else if (mStart > dFin) return `<td></td>`; }
-            if (!content) {
-                if (mEnd < today) {
-                    if (dRec && dRec <= mEnd) { content = "Récolte"; className = "c-vert"; }
-                    else if (p.typeInit === 'semis') { if (dLevee && dLevee <= mEnd) { content = "Levé"; className = "c-violet"; } else if (dStart && dStart <= mEnd) { content = "ST"; className = "c-sous-terre"; } }
-                    else if (dStart && dStart <= mEnd) { content = "Planté"; className = "c-violet"; }
-                } else if (mStart <= today && mEnd >= today) {
-                    const info = getStatutInfo(p);
-                    if (info.text === "Fini") { content = "Arraché"; className = "c-fini"; } else if (info.text === "Récolte") { content = "Récolte"; className = "c-vert"; }
-                    else if (info.text === "Levé" || info.text === "Planté") { content = info.text; className = "c-violet"; } else if (info.text === "Sous terre") { content = "ST"; className = "c-sous-terre"; }
-                }
-            }
-            if (content !== "Récolte" && content !== "Arraché" && (p.recolte || []).includes(MOIS_NOM[ma.m])) { className = content ? "c-prev-act" : "c-prev"; content = content ? "Prév.+" + content : "Prév."; }
-            return `<td class="${className}" style="font-size: 0.65em;">${content}</td>`;
-        }).join('');
-        return `<tr><td class="sticky-col">${p.nom} <br><small>Z:${p.zoneNom} R:${p.rangNum}</small></td>${cells}</tr>`;
-    }).join('');
+}
+
+function validerFormulaire() {
+    const id = document.getElementById('edit-id').value ? parseInt(document.getElementById('edit-id').value) : Date.now();
+    let p = { 
+        id: id, nom: document.getElementById('p_nom').value, typeInit: document.getElementById('p_init').value,
+        date: document.getElementById('p_date').value, dateLevee: document.getElementById('p_date_levee').value,
+        dateRecolte: document.getElementById('p_date_recolte').value, dateFin: document.getElementById('p_date_fin').value,
+        notes: document.getElementById('p_notes').value, recolte: Array.from(document.querySelectorAll('input[name="mr"]:checked')).map(cb => cb.value)
+    };
+    document.querySelectorAll('.custom-field-row').forEach(row => {
+        let k = row.querySelector('.custom-key').value.trim();
+        const v = row.querySelector('.custom-val').value.trim();
+        const isDate = row.querySelector('.custom-val').type === 'date';
+        if(k) {
+            if(isDate) k = k + "Date";
+            if(!['id','statut'].includes(k.toLowerCase())) p[k] = v;
+        }
+    });
+    const zn = document.getElementById('p_zone').value.toUpperCase() || "A";
+    const rn = parseInt(document.getElementById('p_rang').value);
+    monPotager.forEach(z => z.rangs.forEach(r => r.plantes = r.plantes.filter(x => x.id !== id)));
+    let z = monPotager.find(x => x.nom === zn); if(!z){z={nom:zn, rangs:[]}; monPotager.push(z);}
+    let r = z.rangs.find(x => x.numero === rn); if(!r){r={numero:rn, plantes:[]}; z.rangs.push(r);}
+    r.plantes.push(p); save(); switchTab('tab-liste');
 }
 
 function getStatutInfo(p) {
     const today = new Date(); today.setHours(0,0,0,0);
-    const dStart = p.date ? new Date(p.date) : null; const dLevee = p.dateLevee ? new Date(p.dateLevee) : null;
-    const dRec = p.dateRecolte ? new Date(p.dateRecolte) : null; const dFin = p.dateFin ? new Date(p.dateFin) : null;
+    const dStart = p.date ? new Date(p.date) : null;
+    const dLevee = p.dateLevee ? new Date(p.dateLevee) : null;
+    const dRec = p.dateRecolte ? new Date(p.dateRecolte) : null;
+    const dFin = p.dateFin ? new Date(p.dateFin) : null;
     if (dFin && today >= dFin) return { text: "Fini", color: "gris" };
     if (dRec && today >= dRec) return { text: "Récolte", color: "vert" };
     if (p.typeInit === 'semis') {
@@ -298,7 +280,13 @@ function afficherPotager() {
                     const info = getStatutInfo(p);
                     let extraFields = "";
                     const exclude = ['id', 'nom', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'dateFin', 'notes', 'recolte', 'statut'];
-                    Object.keys(p).forEach(k => { if(!exclude.includes(k)) extraFields += `<span class="card-tag"><b>${k}:</b> ${p[k]}</span>`; });
+                    Object.keys(p).forEach(k => { 
+                        if(!exclude.includes(k) && p[k]) {
+                            let label = k.endsWith('Date') ? k.replace('Date', '') : k;
+                            let val = k.endsWith('Date') ? new Date(p[k]).toLocaleDateString('fr-FR') : p[k];
+                            extraFields += `<span class="card-tag"><b>${label}:</b> ${val}</span>`;
+                        }
+                    });
                     let noteHtml = p.notes ? `<span class="card-note">📝 ${p.notes}</span>` : "";
                     let detailSection = (extraFields || noteHtml) ? `<div class="card-details">${extraFields}${noteHtml}</div>` : "";
                     cards += `<div class="plante-card" onclick="editerDirect(${p.id})"><span class="status-badge st-${info.color}">${info.text}</span><strong>${p.nom}</strong><br><small>Zone ${zone.nom} - Rang ${rang.numero}</small>${detailSection}</div>`;
@@ -307,6 +295,41 @@ function afficherPotager() {
         });
         if(cards) container.innerHTML += `<div class="zone-box"><h2>ZONE ${zone.nom}</h2>${cards}</div>`;
     });
+}
+
+function afficherPlanning() {
+    const head = document.getElementById('plan-head');
+    const body = document.getElementById('plan-body');
+    const today = new Date(); today.setHours(0,0,0,0);
+    let toutesPlantes = [];
+    let dateMin = new Date(today.getFullYear(), 0, 1);
+    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
+        toutesPlantes.push({...p, zoneNom: z.nom, rangNum: r.numero});
+        if (p.date) { const d = new Date(p.date); if (d < dateMin) dateMin = new Date(d.getFullYear(), d.getMonth(), 1); }
+    })));
+    toutesPlantes.sort((a, b) => a.zoneNom.localeCompare(b.zoneNom) || a.rangNum - b.rangNum);
+    let moisAffiche = []; let curDate = new Date(dateMin); let endDate = new Date(today.getFullYear() + 1, 11, 31);
+    while (curDate <= endDate) {
+        moisAffiche.push({ m: curDate.getMonth(), y: curDate.getFullYear(), label: MOIS_NOM[curDate.getMonth()] + " " + String(curDate.getFullYear()).slice(-2) });
+        curDate.setMonth(curDate.getMonth() + 1);
+    }
+    head.innerHTML = `<tr><th class="sticky-col">Plante (Zone-Rang)</th>${moisAffiche.map(ma => `<th class="month-header">${ma.label}</th>`).join('')}</tr>`;
+    body.innerHTML = toutesPlantes.map(p => {
+        const dStart = p.date ? new Date(p.date) : null;
+        let cells = moisAffiche.map(ma => {
+            const mStart = new Date(ma.y, ma.m, 1); const mEnd = new Date(ma.y, ma.m + 1, 0);
+            let content = ""; let className = "";
+            const info = getStatutInfo(p);
+            if (dStart && mEnd < new Date(dStart.getFullYear(), dStart.getMonth(), 1)) return `<td></td>`;
+            if (mStart <= today && mEnd >= today) {
+                if (info.text === "Fini") { content = "Arraché"; className = "c-fini"; } else if (info.text === "Récolte") { content = "Récolte"; className = "c-vert"; }
+                else if (info.text === "Levé" || info.text === "Planté") { content = info.text; className = "c-violet"; } else if (info.text === "Sous terre") { content = "ST"; className = "c-sous-terre"; }
+            }
+            if (!content && (p.recolte || []).includes(MOIS_NOM[ma.m])) { className = "c-prev"; content = "Prév."; }
+            return `<td class="${className}" style="font-size: 0.65em;">${content}</td>`;
+        }).join('');
+        return `<tr><td class="sticky-col">${p.nom} <br><small>Z:${p.zoneNom} R:${p.rangNum}</small></td>${cells}</tr>`;
+    }).join('');
 }
 
 function afficherTableauSQL() {
@@ -323,25 +346,6 @@ function afficherTableauSQL() {
         }).join('');
         body.innerHTML += `<tr onclick="editerDirect(${p.id})">${row}</tr>`;
     })));
-}
-
-function validerFormulaire() {
-    const id = document.getElementById('edit-id').value ? parseInt(document.getElementById('edit-id').value) : Date.now();
-    let p = { 
-        id: id, nom: document.getElementById('p_nom').value, typeInit: document.getElementById('p_init').value,
-        date: document.getElementById('p_date').value, dateLevee: document.getElementById('p_date_levee').value,
-        dateRecolte: document.getElementById('p_date_recolte').value, dateFin: document.getElementById('p_date_fin').value,
-        notes: document.getElementById('p_notes').value, recolte: Array.from(document.querySelectorAll('input[name="mr"]:checked')).map(cb => cb.value)
-    };
-    document.querySelectorAll('.custom-field-row').forEach(row => {
-        const k = row.querySelector('.custom-key').value.trim(); const v = row.querySelector('.custom-val').value.trim();
-        if(k && !['id','statut'].includes(k.toLowerCase())) p[k] = v;
-    });
-    const zn = document.getElementById('p_zone').value.toUpperCase() || "A"; const rn = parseInt(document.getElementById('p_rang').value);
-    monPotager.forEach(z => z.rangs.forEach(r => r.plantes = r.plantes.filter(x => x.id !== id)));
-    let z = monPotager.find(x => x.nom === zn); if(!z){z={nom:zn, rangs:[]}; monPotager.push(z);}
-    let r = z.rangs.find(x => x.numero === rn); if(!r){r={numero:rn, plantes:[]}; z.rangs.push(r);}
-    r.plantes.push(p); save(); switchTab('tab-liste');
 }
 
 function editerDirect(id) { monPotager.forEach((z, zi) => z.rangs.forEach((r, ri) => r.plantes.forEach((p, pi) => { if(p.id === id) editer(zi, ri, pi); }))); }
@@ -362,8 +366,7 @@ function editer(zi, ri, pi) {
 function ouvrirAjout() { 
     document.getElementById('pForm').reset(); document.getElementById('edit-id').value = ""; document.getElementById('custom-fields-container').innerHTML = "";
     document.getElementById('del-btn').style.display = 'none'; document.getElementById('dup-btn').style.display = 'none'; 
-    updateDatalistSuggestions(); // Met à jour les suggestions avant d'ouvrir
-    toggleLeveeField('semis'); switchTab('tab-saisie'); 
+    updateDatalistSuggestions(); toggleLeveeField('semis'); switchTab('tab-saisie'); 
 }
 function save() { localStorage.setItem("data_potager", JSON.stringify(monPotager)); }
 function filtrer(t, v) { filtreActuel = { type: t, valeur: v }; toggleSidebar(); afficherPotager(); }
