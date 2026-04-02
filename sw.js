@@ -1,37 +1,20 @@
-const CACHE_NAME = 'potager-v3'; // Incrémentez ici (v4, v5...) pour forcer la mise à jour
-const ASSETS = [
-  './',
-  './index.html',
-  './manifest.json',
-  './icon-512.png'
-];
+const CACHE_NAME = 'potager-auto-update';
+const ASSETS = ['./', './index.html', './manifest.json', './icon-512.png'];
 
-// Installation et mise en cache
 self.addEventListener('install', (e) => {
-  self.skipWaiting();
+  self.skipWaiting(); // Force l'activation immédiate
   e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
   );
 });
 
-// Nettoyage des anciens caches lors de l'activation
 self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-      );
-    })
-  );
+  e.waitUntil(self.clients.claim()); // Prend le contrôle des pages immédiatement
 });
 
-// Stratégie : Réseau d'abord, puis Cache si hors-ligne
 self.addEventListener('fetch', (event) => {
+  // Stratégie : Réseau d'abord, on ne pioche dans le cache QUE si on est hors-ligne
   event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request);
-    })
+    fetch(event.request).catch(() => caches.match(event.request))
   );
 });
