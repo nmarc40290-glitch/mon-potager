@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - v1.6.0022</title>
+    <title>Mon Potager - v1.6.0023</title>
     <link rel="manifest" href="manifest.json">
     <style>
         :root { 
@@ -91,7 +91,7 @@
 <body>
 <nav>
     <div class="nav-left" onclick="toggleSidebar()"><span style="font-weight:900; font-size: 1.1em;">☰ MENU POTAGER</span></div>
-    <div class="nav-version">v.1.6.0022</div>
+    <div class="nav-version">v.1.6.0023</div>
 </nav>
 <datalist id="list-custom-keys"></datalist>
 <button class="fab-add" onclick="ouvrirAjout()">+</button>
@@ -555,13 +555,18 @@ function importJSON(event) {
 }
 
 function exportCSV() {
+    // 1. Préparation des colonnes pour les légumes
     const clesFixes = ['id', 'nom', 'zone', 'rang', 'abris', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'recolte', 'dateFin', 'notes', 'arrosages'];
     let clesDyn = new Set();
     monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => { 
         Object.keys(p).forEach(k => { if(!clesFixes.includes(k)) clesDyn.add(k); }); 
     })));
     const colArr = [...clesFixes, ...Array.from(clesDyn)];
+    
+    // 2. Création de l'entête
     let csv = "\uFEFF" + colArr.join(";") + "\n";
+    
+    // 3. Ajout des lignes de légumes
     monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
         let ligne = colArr.map(c => {
             let v = "-";
@@ -575,17 +580,28 @@ function exportCSV() {
         csv += ligne.join(";") + "\n";
     })));
 
-    // --- PARTIE MODIFIÉE POUR LE NOM DYNAMIQUE ---
-    const versionTag = document.querySelector('.nav-version').innerText.trim();
-    const fileName = `DB_potager_${versionTag.replace(/\./g, '-').replace(/\s+/g, '_')}.csv`;
+    // 4. AJOUT DE LA SECTION PLUIE (Saut de ligne + Entête spéciale)
+    csv += "\n;--- SECTION PLUVIOMÉTRIE ---\n";
+    csv += "DATE;QUANTITÉ (mm)\n"; // Colonnes simples pour la pluie
+    
+    pluviometrie.forEach(p => {
+        csv += `${p.date};${p.mm}\n`;
+    });
 
+    // 5. Génération du nom de fichier avec version et numéro de save
+    const versionApp = document.querySelector('.nav-version').innerText.trim();
+    // On utilise la variable versionEnregistrement si tu l'as créée, sinon on met "export"
+    const suffixeSave = (typeof versionEnregistrement !== 'undefined') ? `SAVE-${versionEnregistrement}` : "export";
+    const fileName = `DB_potager_${versionApp.replace(/\./g, '-')}_${suffixeSave}.csv`;
+
+    // 6. Téléchargement
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = fileName; 
     link.click();
-    // --------------------------------------------
 }
+
     
 
 function updateSidebar() {
