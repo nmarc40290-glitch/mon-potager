@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - v1.6.0006 [P.1.2]</title>
+    <title>Mon Potager - v1.6.0007 [P.1.2]</title>
     <style>
         :root { 
             --primary: #2e7d32; --primary-light: #e8f5e9; --accent: #4caf50; --danger: #d32f2f; 
@@ -22,7 +22,8 @@
         .sidebar.open { transform: translateX(0); }
         .sidebar-header { font-size: 0.75em; font-weight: 900; color: #666; margin-top: 15px; padding: 10px; background: #f0f0f0; border-radius: 5px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .cat-content.hidden { display: none; }
-        .cat-link { display: block; padding: 12px 15px; color: #333; text-decoration: none; border-bottom: 1px solid #f9f9f9; cursor: pointer; font-size: 0.85em; }
+        .cat-link { display: block; padding: 10px 15px; color: #333; text-decoration: none; border-bottom: 1px solid #f9f9f9; cursor: pointer; font-size: 0.85em; }
+        .cat-link:hover { background: #f0f7f0; }
 
         .content-area { flex: 1; overflow-y: auto; padding-bottom: 100px; }
         .section { display: none; padding: 15px; }
@@ -76,7 +77,7 @@
 
 <nav>
     <div class="nav-left" onclick="toggleSidebar()"><strong>☰ MON POTAGER</strong></div>
-    <div class="nav-version">v1.6.0006 [P.1.2]</div>
+    <div class="nav-version">v1.6.0007 [P.1.2]</div>
 </nav>
 
 <datalist id="list-custom-keys"></datalist>
@@ -232,6 +233,24 @@ function afficherPotager() {
     });
 }
 
+function updateSidebar() {
+    const container = document.getElementById('sidebar-content'); container.innerHTML = "";
+    monPotager.sort((a,b) => a.nom.localeCompare(b.nom)).forEach(z => {
+        let plantesHtml = "";
+        z.rangs.forEach(r => r.plantes.forEach(p => {
+            plantesHtml += `<div class="cat-link" onclick="editerDirect(${p.id})" style="padding-left:30px; font-size:0.8em;">• ${p.nom} (R${r.numero})</div>`;
+        }));
+        container.innerHTML += `
+            <div class="sidebar-header" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                ZONE ${z.nom} <span>▼</span>
+            </div>
+            <div class="cat-content">
+                <div class="cat-link" onclick="filtrer('zone', '${z.nom}')" style="background:#f0f7f0; font-weight:bold;">Voir toute la zone</div>
+                ${plantesHtml}
+            </div>`;
+    });
+}
+
 function afficherPlanning() {
     const head = document.getElementById('plan-head'); const body = document.getElementById('plan-body');
     let moisAffiche = []; let today = new Date();
@@ -333,12 +352,6 @@ function exportCSV() {
     const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "potager.csv"; link.click();
 }
 
-function updateSidebar() {
-    const zones = new Set(); monPotager.forEach(z => zones.add(z.nom));
-    const container = document.getElementById('sidebar-content'); container.innerHTML = "<strong>FILTRER PAR ZONE</strong>";
-    Array.from(zones).sort().forEach(z => container.innerHTML += `<a class="cat-link" onclick="filtrer('zone', '${z}')">ZONE ${z}</a>`);
-}
-
 function addCustomField(key = "", val = "") {
     const div = document.createElement('div'); div.className = "custom-field-row";
     div.innerHTML = `<input type="text" class="custom-key" list="list-custom-keys" placeholder="Nom" value="${key}"> <input type="text" class="custom-val" placeholder="Valeur" value="${val}">`;
@@ -359,6 +372,7 @@ function ouvrirAjout() { document.getElementById('pForm').reset(); document.getE
 function supprimerFiche() { if(confirm("Supprimer ?")) { const id = parseInt(document.getElementById('edit-id').value); monPotager.forEach(z => z.rangs.forEach(r => r.plantes = r.plantes.filter(p => p.id !== id))); save(); switchTab('tab-liste'); } }
 
 afficherPotager();
+updateSidebar();
 </script>
 </body>
 </html>
