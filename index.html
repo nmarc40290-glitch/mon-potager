@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - v1.6.0023</title>
+    <title>Mon Potager - v1.6.0024</title>
     <link rel="manifest" href="manifest.json">
     <style>
         :root { 
@@ -91,7 +91,7 @@
 <body>
 <nav>
     <div class="nav-left" onclick="toggleSidebar()"><span style="font-weight:900; font-size: 1.1em;">☰ MENU POTAGER</span></div>
-    <div class="nav-version">v.1.6.0023</div>
+    <div class="nav-version">v.1.6.0024</div>
 </nav>
 <datalist id="list-custom-keys"></datalist>
 <button class="fab-add" onclick="ouvrirAjout()">+</button>
@@ -104,6 +104,7 @@
         <a class="cat-link nav-sidebar-item" onclick="switchTab('tab-sql')">🗄️ TABLEAU SQL</a>
         
         <button id="installBtn" class="btn-install" onclick="installerApp()">📲 INSTALLER L'APPLI</button>
+        <button class="btn-side-opt" onclick="verifierMiseAJour()" style="background: #2196f3; color: white; border: none;">🔄 VÉRIFIER MISE À JOUR</button>
 
         <a class="cat-link" style="font-weight:bold; background:var(--primary-light); margin-top: 10px;" onclick="filtrer('tout', null)">🔄 TOUT AFFICHER</a>
         <div id="sidebar-content"></div>
@@ -211,7 +212,28 @@ async function installerApp() {
         alert("Installation impossible : application déjà installée ou version système identique");
     }
 }
-
+async function verifierMiseAJour() {
+    if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (registration) {
+            // On demande au Service Worker de vérifier GitHub immédiatement
+            await registration.update();
+            
+            // On prévient l'utilisateur
+            alert("Vérification en cours... Si une nouvelle version existe, l'application va redémarrer toute seule.");
+            
+            // Petite astuce : on recharge la page après 2 secondes pour forcer l'affichage
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            alert("Service Worker non trouvé. Rechargez la page manuellement.");
+        }
+    } else {
+        alert("Votre navigateur ne supporte pas les mises à jour automatiques.");
+    }
+}
+    
 function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 function toggleLeveeField(v) { 
     document.getElementById('field-levee').style.display = (v === 'semis' ? 'block' : 'none'); 
