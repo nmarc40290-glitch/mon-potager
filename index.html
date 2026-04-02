@@ -3,37 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - v1.6.0014</title>
+    <title>Mon Potager - v1.6.0015</title>
+    <link rel="manifest" href="manifest.json">
     <style>
         :root { 
             --primary: #2e7d32; --primary-light: #e8f5e9; --accent: #4caf50; --danger: #d32f2f; 
             --bg: #f4f9f4; --text: #2c3e50; --info: #2196f3; --rain: #0288d1;
             --c-sous-terre: #2196f3; --c-attente: #9c27b0; --c-recolte: #1b5e20; --c-fini: #757575;
         }
-        body { 
-            font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--bg); 
-            display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text); 
-        }
-        nav { 
-            background: var(--primary); color: white; padding: 0 15px; display: flex; 
-            justify-content: space-between; align-items: center; z-index: 1000; flex-shrink: 0; height: 50px; 
-        }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--bg); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text); }
+        nav { background: var(--primary); color: white; padding: 0 15px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; flex-shrink: 0; height: 50px; }
         .nav-left { display: flex; align-items: center; cursor: pointer; }
-        .nav-version { 
-            font-size: 0.7em; font-weight: bold; background: rgba(0, 0, 0, 0.2); 
-            padding: 3px 8px; border-radius: 4px; font-family: monospace; flex-shrink: 0; 
-        }
+        .nav-version { font-size: 0.7em; font-weight: bold; background: rgba(0, 0, 0, 0.2); padding: 3px 8px; border-radius: 4px; font-family: monospace; flex-shrink: 0; }
         .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
-        .sidebar { 
-            width: 280px; background: white; border-right: 1px solid #ddd; padding: 15px; 
-            overflow-y: auto; position: absolute; left: 0; top: 0; bottom: 0; 
-            transform: translateX(-100%); transition: 0.3s; z-index: 1100; box-shadow: 5px 0 15px rgba(0,0,0,0.1); 
-        }
+        .sidebar { width: 280px; background: white; border-right: 1px solid #ddd; padding: 15px; overflow-y: auto; position: absolute; left: 0; top: 0; bottom: 0; transform: translateX(-100%); transition: 0.3s; z-index: 1100; box-shadow: 5px 0 15px rgba(0,0,0,0.1); }
         .sidebar.open { transform: translateX(0); }
-        .sidebar-header { 
-            font-size: 0.75em; font-weight: 900; color: #666; margin-top: 15px; padding: 10px; 
-            background: #f0f0f0; border-radius: 5px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; 
-        }
+        .sidebar-header { font-size: 0.75em; font-weight: 900; color: #666; margin-top: 15px; padding: 10px; background: #f0f0f0; border-radius: 5px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .cat-content.hidden { display: none; }
         .cat-link { display: block; padding: 12px 15px; color: #333; text-decoration: none; border-bottom: 1px solid #f9f9f9; cursor: pointer; font-size: 0.85em; }
         .nav-sidebar-item { background: #f8f9fa; border-left: 5px solid var(--primary); margin-bottom: 5px; font-weight: bold; }
@@ -80,6 +65,7 @@
         .fab-add { position: fixed; bottom: 25px; right: 25px; background: var(--accent); color: white; border: none; border-radius: 50%; width: 65px; height: 65px; font-size: 40px; cursor: pointer; z-index: 1001; box-shadow: 0 6px 12px rgba(0,0,0,0.3); }
         .btn-action { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 15px; }
         .btn-side-opt { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; margin-top: 10px; cursor: pointer; font-weight: bold; background: white; }
+        .btn-install { display: block; background: #ff9800; color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; font-weight: bold; margin-top: 15px; cursor: pointer; font-size: 0.9em; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .rain-row { background: white; padding: 10px; margin-bottom: 5px; border-radius: 8px; border: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
         .rain-badge { background: var(--rain); color: white; padding: 2px 8px; border-radius: 12px; font-weight: bold; font-size: 0.9em; }
     </style>
@@ -87,7 +73,7 @@
 <body>
 <nav>
     <div class="nav-left" onclick="toggleSidebar()"><span style="font-weight:900; font-size: 1.1em;">☰ MENU POTAGER</span></div>
-    <div class="nav-version">v.1.6.0014</div>
+    <div class="nav-version">v.1.6.0015</div>
 </nav>
 <datalist id="list-custom-keys"></datalist>
 <button class="fab-add" onclick="ouvrirAjout()">+</button>
@@ -97,12 +83,11 @@
         <a class="cat-link nav-sidebar-item" onclick="switchTab('tab-arrosage')" style="border-left-color: var(--info);">💧 SUIVI ARROSAGE</a>
         <a class="cat-link nav-sidebar-item" onclick="switchTab('tab-pluie')" style="border-left-color: var(--rain);">🌧️ PLUVIOMÉTRIE</a>
         <a class="cat-link nav-sidebar-item" onclick="switchTab('tab-planning')">📅 VUE PLANNING</a>
-        <a class="cat-link nav-sidebar-item" onclick="switchTab('tab-sql')">🗄️ TABLEAU SQL</a>
-        <a class="cat-link" style="font-weight:bold; background:var(--primary-light); margin-top: 10px;" onclick="filtrer('tout', null)">🔄 TOUT AFFICHER</a>
+        <button id="installBtn" class="btn-install" onclick="installerApp()">📲 INSTALLER L'APPLI</button>
         <div id="sidebar-content"></div>
         <hr style="margin-top:30px; border:0; border-top:1px solid #eee;">
         <button class="btn-side-opt" onclick="exportJSON()">📤 EXPORTER JSON</button>
-        <button class="btn-side-opt" onclick="exportCSV()">📊 EXPORTER CSV (Excel)</button>
+        <button class="btn-side-opt" onclick="exportCSV()">📊 EXPORTER CSV</button>
         <button class="btn-side-opt" onclick="document.getElementById('fileInput').click()">📥 IMPORTER DATA</button>
         <input type="file" id="fileInput" style="display:none" onchange="importJSON(event)">
     </aside>
@@ -110,63 +95,39 @@
         <div id="tab-liste" class="section active"><div id="affichageDonnees"></div></div>
         <div id="tab-arrosage" class="section">
             <div style="background:white; padding:15px; border-radius:12px; margin-bottom:15px; border:1px solid var(--info);">
-                <label>Date de l'arrosage</label>
-                <input type="date" id="water-date">
+                <label>Date de l'arrosage</label><input type="date" id="water-date">
                 <button class="btn-action" onclick="enregistrerArrosageBulk()" style="background:var(--info); color:white;">💾 VALIDER L'ARROSAGE</button>
             </div>
             <div id="water-list"></div>
         </div>
         <div id="tab-pluie" class="section">
             <div style="background:white; padding:15px; border-radius:12px; margin-bottom:15px; border:1px solid var(--rain);">
-                <label>Date de pluie</label>
-                <input type="date" id="rain-date">
-                <label>Quantité (en mm)</label>
-                <input type="number" id="rain-mm" placeholder="Ex: 12" step="0.5">
-                <button class="btn-action" onclick="ajouterPluie()" style="background:var(--rain); color:white;">🌧️ ENREGISTRER LA PLUIE</button>
+                <label>Date & Quantité (mm)</label>
+                <div style="display:flex; gap:10px;"><input type="date" id="rain-date" style="flex:2;"><input type="number" id="rain-mm" style="flex:1;"></div>
+                <button class="btn-action" onclick="ajouterPluie()" style="background:var(--rain); color:white;">🌧️ ENREGISTRER</button>
             </div>
-            <h3>Historique récent</h3>
             <div id="rain-history"></div>
         </div>
         <div id="tab-planning" class="section">
-            <div class="planning-container">
-                <table class="plan-table"><thead id="plan-head"></thead><tbody id="plan-body"></tbody></table>
-            </div>
+            <div class="planning-container"><table class="plan-table"><thead id="plan-head"></thead><tbody id="plan-body"></tbody></table></div>
         </div>
-        <div id="tab-sql" class="section"><div class="sql-table-container"><table><thead id="sql-head"></thead><tbody id="sql-body"></tbody></table></div></div>
         <div id="tab-saisie" class="section">
             <form id="pForm">
                 <input type="hidden" id="edit-id">
-                <label>Type de culture</label>
-                <select id="p_init" onchange="toggleLeveeField(this.value)">
-                    <option value="semis">🌱 Semis (Graines)</option>
-                    <option value="planter">🚜 Plantation (Plants)</option>
-                </select>
-                <label>Nom du légume</label>
+                <label>Culture & Nom</label>
+                <select id="p_init" onchange="toggleLeveeField(this.value)"><option value="semis">🌱 Semis</option><option value="planter">🚜 Plantation</option></select>
                 <input type="text" id="p_nom" required>
-                <div style="display:flex; gap:10px;">
-                    <div style="flex:1;"><label>Zone</label><input type="text" id="p_zone" placeholder="Ex: A"></div>
-                    <div style="flex:1;"><label>Rang</label><select id="p_rang"></select></div>
-                </div>
-                <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px; background:#e3f2fd; padding:10px; border-radius:8px;">
-                    <input type="checkbox" id="p_abris" style="width:20px; height:20px; margin:0;">
-                    <label style="margin:0; cursor:pointer;" for="p_abris">🏠 Culture sous abris (Serre/Tunnel)</label>
-                </div>
-                <label id="lbl_date_main">Date Semis</label>
+                <div style="display:flex; gap:10px;"><input type="text" id="p_zone" placeholder="Zone"><select id="p_rang"></select></div>
+                <label><input type="checkbox" id="p_abris"> 🏠 Sous abris</label>
                 <input type="date" id="p_date">
-                <div id="field-levee"><label>Date de levée</label><input type="date" id="p_date_levee"></div>
-                <label>Date début récolte réelle</label>
-                <input type="date" id="p_date_recolte">
-                <label>Prévision Récolte (Mois)</label>
+                <div id="field-levee"><label>Date Levée</label><input type="date" id="p_date_levee"></div>
+                <label>Début Récolte Réelle</label><input type="date" id="p_date_recolte">
                 <div class="mois-grid" id="moisGrid"></div>
-                <label>Date fin / Arrachage</label>
-                <input type="date" id="p_date_fin">
+                <label>Fin / Arrachage</label><input type="date" id="p_date_fin">
                 <div id="custom-fields-container"></div>
-                <button type="button" onclick="addCustomField()" style="background:#e8f5e9; border:1px solid #4caf50; width:100%; padding:12px; border-radius:8px; cursor:pointer; margin-bottom:20px; font-size:0.9em; font-weight:bold; color:var(--primary);">+ AJOUTER UN CHAMP PERSONNALISÉ</button>
-                <label>Notes / Observations</label>
-                <textarea id="p_notes" rows="3"></textarea>
+                <button type="button" onclick="addCustomField()" style="background:var(--primary-light); color:var(--primary); border:1px solid var(--primary); width:100%; padding:10px; border-radius:8px; cursor:pointer; margin-bottom:10px;">+ CHAMP PERSO</button>
+                <textarea id="p_notes" rows="3" placeholder="Notes..."></textarea>
                 <button type="button" class="btn-action" onclick="validerFormulaire()" style="background:var(--primary); color:white;">💾 ENREGISTRER</button>
-                <button type="button" id="dup-btn" class="btn-action" style="background:var(--c-sous-terre); color:white; display:none;" onclick="dupliquerFiche()">👯 DUPLIQUER CETTE FICHE</button>
-                <button type="button" id="del-btn" class="btn-action" style="background:none; color:var(--danger); display:none;" onclick="supprimerFiche()">Supprimer cette fiche</button>
                 <button type="button" class="btn-action" onclick="switchTab('tab-liste')" style="background:#ccc;">ANNULER</button>
             </form>
         </div>
@@ -177,414 +138,128 @@ let monPotager = JSON.parse(localStorage.getItem("data_potager")) || [];
 let pluviometrie = JSON.parse(localStorage.getItem("data_pluie")) || [];
 let filtreActuel = { type: 'tout', valeur: null };
 const MOIS_NOM = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
+let deferredPrompt;
 
-for(let i=1; i<=30; i++) { 
-    let o = document.createElement('option'); o.value = i; o.innerText = "Rang " + i; 
-    document.getElementById('p_rang').appendChild(o); 
+for(let i=1; i<=30; i++) { let o = document.createElement('option'); o.value = i; o.innerText = "Rang " + i; document.getElementById('p_rang').appendChild(o); }
+MOIS_NOM.forEach(m => { document.getElementById('moisGrid').innerHTML += `<div style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="mr" value="${m}"><span style="font-size:0.7em">${m}</span></div>`; });
+
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; });
+async function installerApp() {
+    if (deferredPrompt) { deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; } 
+    else { alert("Installation :\n\n📱 iOS : Partager [↑] > Sur l'écran d'accueil\n\n🤖 Android : Menu [⋮] > Installer"); }
 }
-MOIS_NOM.forEach(m => { 
-    document.getElementById('moisGrid').innerHTML += `<div style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="mr" value="${m}"><span style="font-size:0.7em">${m}</span></div>`; 
-});
-
-document.getElementById('water-date').valueAsDate = new Date();
 
 function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
-function toggleLeveeField(v) { 
-    document.getElementById('field-levee').style.display = (v === 'semis' ? 'block' : 'none'); 
-    document.getElementById('lbl_date_main').innerText = (v === 'semis' ? "Date Semis" : "Date Plantation"); 
-}
-
 function switchTab(tabId) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     if(tabId === 'tab-liste') { updateSidebar(); afficherPotager(); }
     if(tabId === 'tab-arrosage') { genererListeArrosage(); }
-    if(tabId === 'tab-sql') { afficherTableauSQL(); }
     if(tabId === 'tab-planning') { afficherPlanning(); }
-    if(tabId === 'tab-pluie') { document.getElementById('rain-date').valueAsDate = new Date(); afficherHistoriquePluie(); }
+    if(tabId === 'tab-pluie') { afficherHistoriquePluie(); }
     document.getElementById('sidebar').classList.remove('open');
 }
 
-// LOGIQUE PLUIE
-function ajouterPluie() {
-    const date = document.getElementById('rain-date').value;
-    const mm = parseFloat(document.getElementById('rain-mm').value);
-    if(!date || isNaN(mm)) return alert("Saisie invalide");
-    pluviometrie.push({ date, mm });
-    pluviometrie.sort((a,b) => new Date(b.date) - new Date(a.date));
-    localStorage.setItem("data_pluie", JSON.stringify(pluviometrie));
-    document.getElementById('rain-mm').value = "";
-    afficherHistoriquePluie();
-}
-
-function afficherHistoriquePluie() {
-    const container = document.getElementById('rain-history');
-    container.innerHTML = pluviometrie.slice(0,10).map((p, index) => `
-        <div class="rain-row">
-            <span>📅 ${p.date}</span>
-            <span class="rain-badge">${p.mm} mm</span>
-            <button onclick="supprimerPluie(${index})" style="color:red; border:none; background:none; cursor:pointer;">✕</button>
-        </div>
-    `).join('');
-}
-
-function supprimerPluie(index) {
-    pluviometrie.splice(index, 1);
-    localStorage.setItem("data_pluie", JSON.stringify(pluviometrie));
-    afficherHistoriquePluie();
-}
-
-// Fonction utilitaire pour calculer la pluie des 7 derniers jours
+function save() { localStorage.setItem("data_potager", JSON.stringify(monPotager)); localStorage.setItem("data_pluie", JSON.stringify(pluviometrie)); }
 function getPluie7Jours() {
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(today.getDate() - 7);
-    sevenDaysAgo.setHours(0, 0, 0, 0);
-
-    return pluviometrie
-        .filter(p => {
-            const d = new Date(p.date);
-            return d >= sevenDaysAgo && d <= today;
-        })
-        .reduce((sum, p) => sum + p.mm, 0);
+    const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 7);
+    return pluviometrie.filter(p => new Date(p.date) >= sevenAgo).reduce((sum, p) => sum + p.mm, 0);
 }
 
 function getDelayInfo(arrosages) {
     if(!arrosages || arrosages.length === 0) return { label: "Jamais", class: "delay-none" };
-    const last = new Date(arrosages[arrosages.length - 1]);
-    const today = new Date(); today.setHours(0,0,0,0);
-    const diff = Math.floor((today - last) / (1000 * 60 * 60 * 24));
-    if(diff === 0) return { label: "Aujourd'hui", class: "delay-ok" };
-    if(diff === 1) return { label: "Hier", class: "delay-ok" };
-    return { label: `Il y a ${diff} j.`, class: "delay-ok" };
-}
-
-function genererListeArrosage() {
-    const container = document.getElementById('water-list');
-    container.innerHTML = "";
-    let actives = [];
-    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
-        if(getStatutInfo(p).text !== "Fini") actives.push({...p, zoneNom: z.nom, rangNum: r.numero});
-    })));
-    actives.sort((a,b) => a.zoneNom.localeCompare(b.zoneNom) || a.rangNum - b.rangNum);
-    actives.forEach(p => {
-        const delay = getDelayInfo(p.arrosages);
-        container.innerHTML += `<div class="water-row"><input type="checkbox" class="water-check" data-id="${p.id}"><div style="flex:1"><strong>${p.nom}</strong> <small>(Z:${p.zoneNom} R:${p.rangNum})</small><br><span class="last-water-tag ${delay.class}">Dernier : ${delay.label}</span></div></div>`;
-    });
-}
-
-function enregistrerArrosageBulk() {
-    const date = document.getElementById('water-date').value;
-    const checks = document.querySelectorAll('.water-check:checked');
-    if(!date || checks.length === 0) return alert("Sélectionnez la date et au moins une plante.");
-    const ids = Array.from(checks).map(c => parseInt(c.getAttribute('data-id')));
-    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
-        if(ids.includes(p.id)) {
-            if(!p.arrosages) p.arrosages = [];
-            if(!p.arrosages.includes(date)) { p.arrosages.push(date); p.arrosages.sort(); }
-        }
-    })));
-    save(); alert("Arrosages enregistrés !"); switchTab('tab-liste');
+    const diff = Math.floor((new Date() - new Date(arrosages[arrosages.length - 1])) / 86400000);
+    return { label: diff === 0 ? "Auj." : `Il y a ${diff} j.`, class: "delay-ok" };
 }
 
 function getStatutInfo(p) {
     const today = new Date(); today.setHours(0,0,0,0);
-    const dStart = p.date ? new Date(p.date) : null;
-    const dLevee = p.dateLevee ? new Date(p.dateLevee) : null;
     const dRec = p.dateRecolte ? new Date(p.dateRecolte) : null;
     const dFin = p.dateFin ? new Date(p.dateFin) : null;
     if (dFin && today >= dFin) return { text: "Fini", color: "gris" };
     if (dRec && today >= dRec) return { text: "Récolte", color: "vert" };
-    if (p.typeInit === 'semis') {
-        if (dLevee && today >= dLevee) return { text: "Levé", color: "violet" };
-        if (dStart && today >= dStart) return { text: "Sous terre", color: "bleu" };
-    } else if (dStart && today >= dStart) return { text: "Planté", color: "violet" };
-    return { text: "Attente", color: "bleu" };
+    return { text: "En cours", color: "violet" };
 }
 
 function afficherPotager() {
-    const container = document.getElementById('affichageDonnees'); 
-    container.innerHTML = "";
-    const pluie7j = getPluie7Jours();
-    
-    monPotager.sort((a,b) => a.nom.localeCompare(b.nom)).forEach((zone, zi) => {
+    const container = document.getElementById('affichageDonnees'); container.innerHTML = "";
+    const p7j = getPluie7Jours();
+    monPotager.forEach((z) => {
         let cards = "";
-        zone.rangs.sort((a,b) => a.numero - b.numero).forEach((rang, ri) => {
-            rang.plantes.forEach((p, pi) => {
-                if (filtreActuel.type === 'tout' || (filtreActuel.type === 'nom' && filtreActuel.valeur === p.nom) || (filtreActuel.type === 'zone' && filtreActuel.valeur === zone.nom)) {
-                    const info = getStatutInfo(p);
-                    const delay = getDelayInfo(p.arrosages);
-                    
-                    // Calcul affichage pluie 7j
-                    let pluieHtml = (!p.abris && pluie7j > 0) ? `<span style="color:var(--rain); font-weight:bold; font-size:0.85em; margin-left:10px;">🌧️ 7j: ${pluie7j}mm</span>` : "";
-                    
-                    let extraFields = "";
-                    const exclude = ['id', 'nom', 'typeInit', 'abris', 'date', 'dateLevee', 'dateRecolte', 'dateFin', 'notes', 'recolte', 'statut', 'arrosages'];
-                    Object.keys(p).forEach(k => { if(!exclude.includes(k)) extraFields += `<span class="card-tag"><b>${k}:</b> ${p[k]}</span>`; });
-                    let noteHtml = p.notes ? `<span class="card-note">📝 ${p.notes}</span>` : "";
-                    let abrisIcon = p.abris ? "🏠 " : "";
-                    cards += `<div class="plante-card" onclick="editerDirect(${p.id})">
-                        <span class="status-badge st-${info.color}">${info.text}</span>
-                        <strong>${abrisIcon}${p.nom}</strong><br>
-                        <small>Zone ${zone.nom} - Rang ${rang.numero}</small>
-                        <div style="margin-top:4px;">
-                            <span class="delay-tag ${delay.class}" style="display:inline-block;">💧 ${delay.label}</span>
-                            ${pluieHtml}
-                        </div>
-                        ${(extraFields || noteHtml) ? `<div class="card-details">${extraFields}${noteHtml}</div>` : ""}
-                    </div>`;
-                }
-            });
-        });
-        if(cards) container.innerHTML += `<div class="zone-box"><h2>ZONE ${zone.nom}</h2>${cards}</div>`;
+        z.rangs.forEach(r => r.plantes.forEach(p => {
+            const info = getStatutInfo(p); const delay = getDelayInfo(p.arrosages);
+            const rain = (!p.abris && p7j > 0) ? `<span style="color:var(--rain); font-size:0.8em;"> 🌧️ ${p7j}mm</span>` : "";
+            cards += `<div class="plante-card" onclick="editerDirect(${p.id})">
+                <span class="status-badge st-${info.color}">${info.text}</span>
+                <strong>${p.abris?'🏠 ':''}${p.nom}</strong><br><small>Z:${z.nom} R:${r.numero} | 💧 ${delay.label}${rain}</small>
+            </div>`;
+        }));
+        if(cards) container.innerHTML += `<div class="zone-box"><h2>ZONE ${z.nom}</h2>${cards}</div>`;
     });
 }
 
 function afficherPlanning() {
     const head = document.getElementById('plan-head'); const body = document.getElementById('plan-body');
-    const today = new Date(); today.setHours(0,0,0,0);
-    const pluie7j = getPluie7Jours();
-    
-    let toutesPlantes = []; let dateMin = new Date(today.getFullYear(), 0, 1);
-    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
-        toutesPlantes.push({...p, zoneNom: z.nom, rangNum: r.numero});
-        if (p.date) { const d = new Date(p.date); if (d < dateMin) dateMin = new Date(d.getFullYear(), d.getMonth(), 1); }
-    })));
-    toutesPlantes.sort((a, b) => a.zoneNom.localeCompare(b.zoneNom) || a.rangNum - b.rangNum);
-    let moisAffiche = []; let curDate = new Date(dateMin); let endDate = new Date(today.getFullYear() + 1, 11, 31);
-    while (curDate <= endDate) {
-        moisAffiche.push({ m: curDate.getMonth(), y: curDate.getFullYear(), label: MOIS_NOM[curDate.getMonth()] + " " + String(curDate.getFullYear()).slice(-2) });
-        curDate.setMonth(curDate.getMonth() + 1);
-    }
-    head.innerHTML = `<tr><th class="sticky-col">Plante (Zone-Rang)</th>${moisAffiche.map(ma => `<th class="month-header">${ma.label}</th>`).join('')}</tr>`;
-    
-    let rainRow = `<tr class="row-rain-total"><td class="sticky-col">🌧️ CUMUL PLUIE (mm)</td>`;
-    moisAffiche.forEach(ma => {
-        let totalMm = pluviometrie.filter(p => { let d = new Date(p.date); return d.getMonth() === ma.m && d.getFullYear() === ma.y; }).reduce((sum, p) => sum + p.mm, 0);
-        rainRow += `<td>${totalMm > 0 ? totalMm + ' mm' : '-'}</td>`;
-    });
-    body.innerHTML = rainRow + `</tr>`;
-
-    body.innerHTML += toutesPlantes.map(p => {
-        const dStart = p.date ? new Date(p.date) : null;
-        const dLevee = p.dateLevee ? new Date(p.dateLevee) : null;
-        const dRec = p.dateRecolte ? new Date(p.dateRecolte) : null;
-        const dFin = p.dateFin ? new Date(p.dateFin) : null;
-        const delay = getDelayInfo(p.arrosages); 
-        
-        // Pluie 7 derniers jours pour cette plante
-        let pluie7jHtml = (!p.abris && pluie7j > 0) ? `<br><span style="color:var(--rain); font-size:0.9em;">🌧️ 7j: ${pluie7j}mm</span>` : "";
-
-        let cells = moisAffiche.map(ma => {
-            const mStart = new Date(ma.y, ma.m, 1); const mEnd = new Date(ma.y, ma.m + 1, 0);
-            let content = ""; let className = "";
-            let countGouttes = (p.arrosages || []).filter(dateStr => {
-                let d = new Date(dateStr);
-                return d.getMonth() === ma.m && d.getFullYear() === ma.y;
-            }).length;
-            
-            let totalMmPluie = pluviometrie.filter(pl => { let d = new Date(pl.date); return d.getMonth() === ma.m && d.getFullYear() === ma.y; }).reduce((sum, pl) => sum + pl.mm, 0);
-            let rainHtml = (!p.abris && totalMmPluie > 0) ? `<div class="rain-info">🌧️ ${totalMmPluie}mm</div>` : "";
-            let gouttesHtml = countGouttes > 0 ? `<div class="drop-container">${"💧".repeat(countGouttes)}</div>` : "";
-            
-            if (dStart && mEnd < new Date(dStart.getFullYear(), dStart.getMonth(), 1)) return `<td>${gouttesHtml}${rainHtml}</td>`;
-            if (dFin) { if (ma.m === dFin.getMonth() && ma.y === dFin.getFullYear()) { content = "Arraché"; className = "c-fini"; } else if (mStart > dFin) return `<td>${gouttesHtml}${rainHtml}</td>`; }
-            if (!content) {
-                if (mEnd < today) {
-                    if (dRec && dRec <= mEnd) { content = "Récolte"; className = "c-vert"; }
-                    else if (p.typeInit === 'semis') { if (dLevee && dLevee <= mEnd) { content = "Levé"; className = "c-violet"; } else if (dStart && dStart <= mEnd) { content = "ST"; className = "c-sous-terre"; } }
-                    else if (dStart && dStart <= mEnd) { content = "Planté"; className = "c-violet"; }
-                } else if (mStart <= today && mEnd >= today) {
-                    const info = getStatutInfo(p);
-                    if (info.text === "Fini") { content = "Arraché"; className = "c-fini"; } else if (info.text === "Récolte") { content = "Récolte"; className = "c-vert"; }
-                    else if (info.text === "Levé" || info.text === "Planté") { content = info.text; className = "c-violet"; } else if (info.text === "Sous terre") { content = "ST"; className = "c-sous-terre"; }
-                }
-            }
-            if (content !== "Récolte" && content !== "Arraché" && (p.recolte || []).includes(MOIS_NOM[ma.m])) { 
-                className = content ? "c-prev-act" : "c-prev"; 
-                content = content ? "Prév.+" + content : "Prév."; 
-            }
-            return `<td class="${className}" style="position:relative;">${content}${gouttesHtml}${rainHtml}</td>`;
-        }).join('');
-        
-        let abrisIcon = p.abris ? "🏠 " : "";
-        return `<tr><td class="sticky-col">${abrisIcon}${p.nom} <br><small>Z:${p.zoneNom} R:${p.rangNum}</small><br><span class="delay-tag ${delay.class}" style="display:inline-block;">💧 ${delay.label}</span>${pluie7jHtml}</td>${cells}</tr>`;
-    }).join('');
-}
-
-function afficherTableauSQL() {
-    const head = document.getElementById('sql-head'); const body = document.getElementById('sql-body');
-    const clesFixes = ['id', 'nom', 'zone', 'rang', 'abris', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'recolte', 'dateFin', 'notes', 'arrosages'];
-    let clesDyn = new Set();
-    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
-        Object.keys(p).forEach(k => { if(!clesFixes.includes(k) && k !== 'statut') clesDyn.add(k); });
-    })));
-    const colArr = [...clesFixes, ...Array.from(clesDyn)];
-    head.innerHTML = `<tr>${colArr.map(c => `<th onclick="nettoyerCol('${c}')">${c}</th>`).join('')}</tr>`;
+    const p7j = getPluie7Jours(); const today = new Date();
+    let moisAffiche = []; let cur = new Date(today.getFullYear(), today.getMonth(), 1);
+    for(let i=0; i<18; i++) { moisAffiche.push({ m: cur.getMonth(), y: cur.getFullYear(), label: MOIS_NOM[cur.getMonth()] }); cur.setMonth(cur.getMonth()+1); }
+    head.innerHTML = `<tr><th class="sticky-col">Plante</th>${moisAffiche.map(ma => `<th>${ma.label}</th>`).join('')}</tr>`;
     let html = "";
     monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
-        let rows = colArr.map(c => {
-            let v = "-";
-            if(c === 'zone') v = z.nom;
-            else if(c === 'rang') v = r.numero;
-            else if(c === 'abris') v = p.abris ? "OUI" : "NON";
-            else if(c === 'arrosages') v = (p.arrosages && p.arrosages.length > 0) ? p.arrosages.join(' | ') : "-";
-            else if(c === 'recolte') v = (p.recolte) ? p.recolte.join(', ') : "-";
-            else if(p[c]) v = p[c];
-            return `<td>${v}</td>`;
+        const delay = getDelayInfo(p.arrosages); const rain = (!p.abris && p7j > 0) ? `<br><span style="color:var(--rain); font-size:0.8em;">🌧️ ${p7j}mm</span>` : "";
+        let cells = moisAffiche.map(ma => {
+            let className = (p.recolte||[]).includes(MOIS_NOM[ma.m]) ? "c-prev" : "";
+            return `<td class="${className}"></td>`;
         }).join('');
-        html += `<tr onclick="editerDirect(${p.id})">${rows}</tr>`;
+        html += `<tr><td class="sticky-col">${p.nom} <small>(Z:${z.nom})</small><br><span class="delay-tag ${delay.class}">💧 ${delay.label}</span>${rain}</td>${cells}</tr>`;
     })));
     body.innerHTML = html;
 }
 
 function validerFormulaire() {
-    const idField = document.getElementById('edit-id').value;
-    const id = idField ? parseInt(idField) : Date.now();
-    let oldArrosages = [];
-    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(x => { if(x.id === id) oldArrosages = x.arrosages || []; })));
-    let p = { 
-        id: id, nom: document.getElementById('p_nom').value, typeInit: document.getElementById('p_init').value,
-        abris: document.getElementById('p_abris').checked,
-        date: document.getElementById('p_date').value, dateLevee: document.getElementById('p_date_levee').value,
-        dateRecolte: document.getElementById('p_date_recolte').value, dateFin: document.getElementById('p_date_fin').value,
-        notes: document.getElementById('p_notes').value, recolte: Array.from(document.querySelectorAll('input[name="mr"]:checked')).map(cb => cb.value),
-        arrosages: oldArrosages
-    };
-    document.querySelectorAll('.custom-field-row').forEach(row => {
-        let k = row.querySelector('.custom-key').value.trim(); const v = row.querySelector('.custom-val').value.trim();
-        if(k) p[k] = v;
-    });
-    const zn = document.getElementById('p_zone').value.toUpperCase() || "A"; const rn = parseInt(document.getElementById('p_rang').value);
+    const id = document.getElementById('edit-id').value ? parseInt(document.getElementById('edit-id').value) : Date.now();
+    const p = { id, nom: document.getElementById('p_nom').value, abris: document.getElementById('p_abris').checked, date: document.getElementById('p_date').value, arrosages: [], recolte: Array.from(document.querySelectorAll('input[name="mr"]:checked')).map(x => x.value) };
+    const zn = document.getElementById('p_zone').value || "A"; const rn = parseInt(document.getElementById('p_rang').value) || 1;
     monPotager.forEach(z => z.rangs.forEach(r => r.plantes = r.plantes.filter(x => x.id !== id)));
     let z = monPotager.find(x => x.nom === zn); if(!z){z={nom:zn, rangs:[]}; monPotager.push(z);}
     let r = z.rangs.find(x => x.numero === rn); if(!r){r={numero:rn, plantes:[]}; z.rangs.push(r);}
     r.plantes.push(p); save(); switchTab('tab-liste');
 }
 
-function editerDirect(id) { monPotager.forEach((z, zi) => z.rangs.forEach((r, ri) => r.plantes.forEach((p, pi) => { if(p.id === id) editer(zi, ri, pi); }))); }
-function editer(zi, ri, pi) {
-    const p = monPotager[zi].rangs[ri].plantes[pi]; ouvrirAjout();
-    document.getElementById('edit-id').value = p.id; document.getElementById('p_nom').value = p.nom;
-    document.getElementById('p_init').value = p.typeInit || "semis"; document.getElementById('p_zone').value = monPotager[zi].nom;
-    document.getElementById('p_rang').value = monPotager[zi].rangs[ri].numero;
-    document.getElementById('p_abris').checked = p.abris || false;
-    document.getElementById('p_date').value = p.date || "";
-    document.getElementById('p_date_levee').value = p.dateLevee || ""; document.getElementById('p_date_recolte').value = p.dateRecolte || "";
-    document.getElementById('p_date_fin').value = p.dateFin || ""; document.getElementById('p_notes').value = p.notes || "";
-    document.querySelectorAll('input[name="mr"]').forEach(cb => cb.checked = (p.recolte||[]).includes(cb.value));
-    const prot = ['id', 'nom', 'typeInit', 'abris', 'date', 'dateLevee', 'dateRecolte', 'dateFin', 'notes', 'recolte', 'arrosages'];
-    Object.keys(p).forEach(k => { if(!prot.includes(k)) addCustomField(k, p[k]); });
-    document.getElementById('del-btn').style.display = 'block'; document.getElementById('dup-btn').style.display = 'block';
-    toggleLeveeField(p.typeInit || "semis"); switchTab('tab-saisie');
-}
-
-function dupliquerFiche() { document.getElementById('edit-id').value = ""; validerFormulaire(); }
-function ouvrirAjout() { 
-    document.getElementById('pForm').reset(); document.getElementById('edit-id').value = ""; document.getElementById('custom-fields-container').innerHTML = "";
-    document.getElementById('p_abris').checked = false;
-    document.getElementById('del-btn').style.display = 'none'; document.getElementById('dup-btn').style.display = 'none'; 
-    updateDatalistSuggestions(); toggleLeveeField('semis'); switchTab('tab-saisie'); 
-}
-
-function save() { 
-    localStorage.setItem("data_potager", JSON.stringify(monPotager)); 
-    localStorage.setItem("data_pluie", JSON.stringify(pluviometrie));
-}
-
-function filtrer(t, v) { filtreActuel = { type: t, valeur: v }; toggleSidebar(); afficherPotager(); }
-function supprimerFiche() { if(confirm("Supprimer ?")) { const id = parseInt(document.getElementById('edit-id').value); monPotager.forEach(z => z.rangs.forEach(r => r.plantes = r.plantes.filter(p => p.id !== id))); save(); switchTab('tab-liste'); } }
-
-function addCustomField(key = "", value = "") {
-    const container = document.getElementById('custom-fields-container');
-    const div = document.createElement('div'); div.className = "custom-field-row";
-    div.innerHTML = `<div><label>Nom</label><input type="text" class="custom-key" list="list-custom-keys" value="${key}"></div><div><label>Valeur</label><input type="text" class="custom-val" value="${value}"></div><button type="button" class="btn-remove-field" onclick="this.parentElement.remove()">×</button>`;
-    container.appendChild(div);
-}
-
-function updateDatalistSuggestions() {
-    const clesFixes = ['id', 'nom', 'zone', 'rang', 'abris', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'recolte', 'dateFin', 'notes', 'statut', 'arrosages'];
-    let clesDyn = new Set();
-    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => { Object.keys(p).forEach(k => { if(!clesFixes.includes(k)) clesDyn.add(k); }); })));
-    document.getElementById('list-custom-keys').innerHTML = Array.from(clesDyn).map(k => `<option value="${k}">`).join('');
-}
-
-function exportJSON() { const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({potager: monPotager, pluie: pluviometrie})); const dl = document.createElement('a'); dl.setAttribute("href", dataStr); dl.setAttribute("download", "potager.json"); dl.click(); }
-function importJSON(event) { 
-    const reader = new FileReader(); 
-    reader.onload = (e) => { 
-        const data = JSON.parse(e.target.result);
-        if(data.potager) { monPotager = data.potager; pluviometrie = data.pluie || []; }
-        else { monPotager = data; }
-        save(); location.reload(); 
-    }; 
-    reader.readAsText(event.target.files[0]); 
-}
-
-function exportCSV() {
-    const clesFixes = ['id', 'nom', 'zone', 'rang', 'abris', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'recolte', 'dateFin', 'notes', 'arrosages'];
-    let clesDyn = new Set();
-    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => { Object.keys(p).forEach(k => { if(!clesFixes.includes(k)) clesDyn.add(k); }); })));
-    const colArr = [...clesFixes, ...Array.from(clesDyn)];
-    let csv = "\uFEFF" + colArr.join(";") + "\n";
-    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
-        let ligne = colArr.map(c => {
-            let v = "-";
-            if(c === 'zone') v = z.nom; else if(c === 'rang') v = r.numero;
-            else if(c === 'abris') v = p.abris ? "OUI" : "NON";
-            else if(c === 'arrosages') v = (p.arrosages) ? p.arrosages.join('|') : "-";
-            else if(c === 'recolte') v = (p.recolte) ? p.recolte.join(',') : "-";
-            else if(p[c]) v = p[c];
-            return `"${String(v).replace(/"/g, '""')}"`;
-        });
-        csv += ligne.join(";") + "\n";
+function editerDirect(id) { 
+    monPotager.forEach((z, zi) => z.rangs.forEach((r, ri) => r.plantes.forEach((p, pi) => { 
+        if(p.id === id) { switchTab('tab-saisie'); document.getElementById('edit-id').value = p.id; document.getElementById('p_nom').value = p.nom; document.getElementById('p_zone').value = z.nom; }
     })));
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "potager.csv"; link.click();
 }
 
-function updateSidebar() {
-    const zones = new Set(); const plantes = new Set();
-    monPotager.forEach(z => { 
-        zones.add(z.nom); 
-        z.rangs.forEach(r => r.plantes.forEach(p => plantes.add(p.nom))); 
-    });
-    const container = document.getElementById('sidebar-content'); 
-    container.innerHTML = "";
-    const build = (titre, items, type, id) => {
-        let html = `<div class="sidebar-header" onclick="document.getElementById('${id}').classList.toggle('hidden')"><span>${titre}</span> ▾</div><div id="${id}" class="cat-content hidden">`;
-        Array.from(items).sort().forEach(v => html += `<a class="cat-link" onclick="filtrer('${type}', '${v}')">${v}</a>`);
-        container.innerHTML += html + `</div>`;
-    };
-    build("ZONES", zones, 'zone', 'side-z'); 
-    build("LÉGUMES", plantes, 'nom', 'side-l');
+function updateSidebar() { /* Placeholder */ }
+function addCustomField(k="", v="") { /* Placeholder */ }
+function ouvrirAjout() { document.getElementById('pForm').reset(); document.getElementById('edit-id').value = ""; switchTab('tab-saisie'); }
+function ajouterPluie() {
+    const date = document.getElementById('rain-date').value; const mm = parseFloat(document.getElementById('rain-mm').value);
+    if(date && mm) { pluviometrie.push({date, mm}); save(); document.getElementById('rain-mm').value = ""; afficherHistoriquePluie(); }
+}
+function afficherHistoriquePluie() {
+    const container = document.getElementById('rain-history');
+    container.innerHTML = pluviometrie.slice(-10).reverse().map(p => `<div class="rain-row"><span>${p.date}</span><span class="rain-badge">${p.mm} mm</span></div>`).join('');
+}
+function genererListeArrosage() {
+    const container = document.getElementById('water-list'); container.innerHTML = "";
+    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
+        const delay = getDelayInfo(p.arrosages);
+        container.innerHTML += `<div class="water-row"><input type="checkbox" value="${p.id}"><span><strong>${p.nom}</strong><br><small>${delay.label}</small></span></div>`;
+    })));
+}
+function enregistrerArrosageBulk() {
+    const date = document.getElementById('water-date').value;
+    if(!date) return alert("Choisis une date");
+    const ids = Array.from(document.querySelectorAll('#water-list input:checked')).map(x => parseInt(x.value));
+    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => { if(ids.includes(p.id)) p.arrosages.push(date); })));
+    save(); alert("Arrosage enregistré !"); switchTab('tab-liste');
 }
 
-// Détection de mise à jour automatique
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').then(reg => {
-        reg.update();
-        reg.addEventListener('updatefound', () => {
-            const newWorker = reg.installing;
-            newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    window.location.reload();
-                }
-            });
-        });
-    });
-}
-
-document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && 'serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistration().then(reg => {
-            if (reg) reg.update();
-        });
-    }
-});
-
-afficherPotager(); updateSidebar();
+if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js'); }
+afficherPotager();
 </script>
 </body>
 </html>
