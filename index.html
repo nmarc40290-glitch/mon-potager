@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - v1.6.0000</title>
+    <title>Mon Potager - v1.6.0001</title>
     <style>
         :root { 
             --primary: #2e7d32; --primary-light: #e8f5e9; --accent: #4caf50; --danger: #d32f2f; 
@@ -29,7 +29,7 @@
         .section { display: none; padding: 15px; }
         .section.active { display: block; }
 
-        /* Style Arrosage v1.6 */
+        /* Style Arrosage */
         .water-row { display: flex; align-items: center; background: white; padding: 12px; margin-bottom: 5px; border-radius: 8px; border: 1px solid #eee; }
         .water-row input[type="checkbox"] { width: 25px; height: 25px; margin-right: 15px; accent-color: var(--info); }
         .last-water-tag { font-size: 0.75em; color: var(--info); font-weight: bold; }
@@ -81,7 +81,7 @@
 
 <nav>
     <div class="nav-left" onclick="toggleSidebar()"><span style="font-weight:900; font-size: 1.1em;">☰ MENU POTAGER</span></div>
-    <div class="nav-version">V.1.6.0000</div>
+    <div class="nav-version">V.1.6.0001</div>
 </nav>
 
 <datalist id="list-custom-keys"></datalist>
@@ -187,7 +187,6 @@ function switchTab(tabId) {
     document.getElementById('sidebar').classList.remove('open');
 }
 
-// LOGIQUE ARROSAGE v1.6 (PROTOCOLE v1.1)
 function genererListeArrosage() {
     const container = document.getElementById('water-list');
     container.innerHTML = "";
@@ -223,9 +222,8 @@ function enregistrerArrosageBulk() {
     save(); alert("Arrosage validé"); switchTab('tab-liste');
 }
 
-// RESTAURATION FONCTIONS V1.5.0017
 function nettoyerCol(cle) {
-    const prot = ['id', 'nom', 'zone', 'rang', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'recolte', 'dateFin', 'notes'];
+    const prot = ['id', 'nom', 'zone', 'rang', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'recolte', 'dateFin', 'notes', 'arrosages'];
     if (prot.includes(cle)) return alert("Champ système protégé.");
     if (confirm("Supprimer la colonne '" + cle + "' ?")) {
         monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => delete p[cle])));
@@ -244,6 +242,7 @@ function addCustomField(key = "", value = "", type = "text") {
         <button type="button" class="btn-remove-field" onclick="this.parentElement.remove()">×</button>`;
     container.appendChild(div);
 }
+
 function addDateLink(btn) {
     const row = btn.closest('.custom-field-row');
     const key = row.querySelector('.custom-key').value.trim();
@@ -337,14 +336,19 @@ function afficherPlanning() {
 
 function afficherTableauSQL() {
     const head = document.getElementById('sql-head'); const body = document.getElementById('sql-body');
-    let clesFixes = ['id', 'nom', 'zone', 'rang', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'recolte', 'dateFin', 'notes'];
-    let clesDyn = new Set(); monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => Object.keys(p).forEach(k => { if(!clesFixes.includes(k) && k !== 'statut' && k !== 'arrosages') clesDyn.add(k); }))));
+    let clesFixes = ['id', 'nom', 'zone', 'rang', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'recolte', 'dateFin', 'notes', 'arrosages'];
+    let clesDyn = new Set(); monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => Object.keys(p).forEach(k => { if(!clesFixes.includes(k) && k !== 'statut') clesDyn.add(k); }))));
     let colArr = [...clesFixes, ...Array.from(clesDyn)];
     head.innerHTML = `<tr>${colArr.map(c => `<th onclick="nettoyerCol('${c}')">${c}</th>`).join('')}</tr>`;
     body.innerHTML = "";
     monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
         let row = colArr.map(c => {
-            let val = "-"; if (c === 'zone') val = z.nom; else if (c === 'rang') val = r.numero; else if (c === 'recolte') val = p.recolte ? p.recolte.join(', ') : "-"; else if (p[c]) val = p[c];
+            let val = "-"; 
+            if (c === 'zone') val = z.nom; 
+            else if (c === 'rang') val = r.numero; 
+            else if (c === 'recolte') val = p.recolte ? p.recolte.join(', ') : "-"; 
+            else if (c === 'arrosages') val = p.arrosages ? p.arrosages.join(' | ') : "-";
+            else if (p[c]) val = p[c];
             return `<td>${val}</td>`;
         }).join('');
         body.innerHTML += `<tr onclick="editerDirect(${p.id})">${row}</tr>`;
@@ -412,12 +416,15 @@ function updateSidebar() {
 }
 
 function exportCSV() {
-    let clesFixes = ['id', 'nom', 'zone', 'rang', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'recolte', 'dateFin', 'notes'];
+    let clesFixes = ['id', 'nom', 'zone', 'rang', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'recolte', 'dateFin', 'notes', 'arrosages'];
     let clesDyn = new Set(); monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => Object.keys(p).forEach(k => { if(!clesFixes.includes(k)) clesDyn.add(k); }))));
     let colArr = [...clesFixes, ...Array.from(clesDyn)];
     let csv = "\uFEFF" + colArr.join(";") + "\n";
     monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
-        let ligne = colArr.map(c => { let v = (c==='zone')?z.nom:(c==='rang')?r.numero:(c==='recolte' && p[c])?p[c].join(','):p[c]||"-"; return `"${String(v).replace(/"/g, '""')}"`; });
+        let ligne = colArr.map(c => { 
+            let v = (c==='zone')?z.nom:(c==='rang')?r.numero:(c==='recolte' && p[c])?p[c].join(','):(c==='arrosages' && p[c])?p[c].join('|'):p[c]||"-"; 
+            return `"${String(v).replace(/"/g, '""')}"`; 
+        });
         csv += ligne.join(";") + "\n";
     })));
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "potager.csv"; link.click();
