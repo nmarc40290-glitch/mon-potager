@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - v1.6.0001</title>
+    <title>Mon Potager - v1.6.0001 (Correctif)</title>
     <style>
         :root { 
             --primary: #2e7d32; --primary-light: #e8f5e9; --accent: #4caf50; --danger: #d32f2f; 
@@ -29,7 +29,6 @@
         .section { display: none; padding: 15px; }
         .section.active { display: block; }
 
-        /* Style Arrosage */
         .water-row { display: flex; align-items: center; background: white; padding: 12px; margin-bottom: 5px; border-radius: 8px; border: 1px solid #eee; }
         .water-row input[type="checkbox"] { width: 25px; height: 25px; margin-right: 15px; accent-color: var(--info); }
         .last-water-tag { font-size: 0.75em; color: var(--info); font-weight: bold; }
@@ -81,7 +80,7 @@
 
 <nav>
     <div class="nav-left" onclick="toggleSidebar()"><span style="font-weight:900; font-size: 1.1em;">☰ MENU POTAGER</span></div>
-    <div class="nav-version">V.1.6.0001</div>
+    <div class="nav-version">V.1.6.0001 (Fix)</div>
 </nav>
 
 <datalist id="list-custom-keys"></datalist>
@@ -197,14 +196,7 @@ function genererListeArrosage() {
     actives.sort((a,b) => a.zoneNom.localeCompare(b.zoneNom) || a.rangNum - b.rangNum);
     actives.forEach(p => {
         const last = (p.arrosages && p.arrosages.length > 0) ? p.arrosages[p.arrosages.length-1] : "Jamais";
-        container.innerHTML += `
-            <div class="water-row">
-                <input type="checkbox" class="water-check" data-id="${p.id}">
-                <div style="flex:1">
-                    <strong>${p.nom}</strong> <small>(Z:${p.zoneNom} R:${p.rangNum})</small><br>
-                    <span class="last-water-tag">Dernier : ${last}</span>
-                </div>
-            </div>`;
+        container.innerHTML += `<div class="water-row"><input type="checkbox" class="water-check" data-id="${p.id}"><div style="flex:1"><strong>${p.nom}</strong> <small>(Z:${p.zoneNom} R:${p.rangNum})</small><br><span class="last-water-tag">Dernier : ${last}</span></div></div>`;
     });
 }
 
@@ -235,11 +227,7 @@ function addCustomField(key = "", value = "", type = "text") {
     const container = document.getElementById('custom-fields-container');
     const div = document.createElement('div'); div.className = "custom-field-row";
     const isDate = type === 'date' || key.endsWith('Date');
-    div.innerHTML = `
-        <div><label>Nom</label><input type="text" class="custom-key" list="list-custom-keys" value="${isDate?key.replace('Date',''):key}"></div>
-        <div><label>Valeur</label><input type="${isDate?'date':'text'}" class="custom-val" value="${value}"></div>
-        ${!isDate ? `<span class="btn-link-date" onclick="addDateLink(this)">+ Ajouter Date</span>` : ''}
-        <button type="button" class="btn-remove-field" onclick="this.parentElement.remove()">×</button>`;
+    div.innerHTML = `<div><label>Nom</label><input type="text" class="custom-key" list="list-custom-keys" value="${isDate?key.replace('Date',''):key}"></div><div><label>Valeur</label><input type="${isDate?'date':'text'}" class="custom-val" value="${value}"></div>${!isDate ? `<span class="btn-link-date" onclick="addDateLink(this)">+ Ajouter Date</span>` : ''}<button type="button" class="btn-remove-field" onclick="this.parentElement.remove()">×</button>`;
     container.appendChild(div);
 }
 
@@ -252,9 +240,7 @@ function addDateLink(btn) {
 function updateDatalistSuggestions() {
     const clesFixes = ['id', 'nom', 'zone', 'rang', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'recolte', 'dateFin', 'notes', 'statut', 'arrosages'];
     let clesDyn = new Set();
-    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
-        Object.keys(p).forEach(k => { if(!clesFixes.includes(k)) clesDyn.add(k); });
-    })));
+    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => { Object.keys(p).forEach(k => { if(!clesFixes.includes(k)) clesDyn.add(k); }); })));
     document.getElementById('list-custom-keys').innerHTML = Array.from(clesDyn).map(k => `<option value="${k}">`).join('');
 }
 
@@ -336,34 +322,40 @@ function afficherPlanning() {
 
 function afficherTableauSQL() {
     const head = document.getElementById('sql-head'); const body = document.getElementById('sql-body');
-    let clesFixes = ['id', 'nom', 'zone', 'rang', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'recolte', 'dateFin', 'notes', 'arrosages'];
-    let clesDyn = new Set(); monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => Object.keys(p).forEach(k => { if(!clesFixes.includes(k) && k !== 'statut') clesDyn.add(k); }))));
-    let colArr = [...clesFixes, ...Array.from(clesDyn)];
-    head.innerHTML = `<tr>${colArr.map(c => `<th onclick="nettoyerCol('${c}')">${c}</th>`).join('')}</tr>`;
-    body.innerHTML = "";
+    const clesFixes = ['id', 'nom', 'zone', 'rang', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'recolte', 'dateFin', 'notes', 'arrosages'];
+    let clesDyn = new Set();
     monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
-        let row = colArr.map(c => {
-            let val = "-"; 
-            if (c === 'zone') val = z.nom; 
-            else if (c === 'rang') val = r.numero; 
-            else if (c === 'recolte') val = p.recolte ? p.recolte.join(', ') : "-"; 
-            else if (c === 'arrosages') val = p.arrosages ? p.arrosages.join(' | ') : "-";
-            else if (p[c]) val = p[c];
-            return `<td>${val}</td>`;
-        }).join('');
-        body.innerHTML += `<tr onclick="editerDirect(${p.id})">${row}</tr>`;
+        Object.keys(p).forEach(k => { if(!clesFixes.includes(k) && k !== 'statut') clesDyn.add(k); });
     })));
+    const colArr = [...clesFixes, ...Array.from(clesDyn)];
+    head.innerHTML = `<tr>${colArr.map(c => `<th onclick="nettoyerCol('${c}')">${c}</th>`).join('')}</tr>`;
+    let html = "";
+    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
+        let rows = colArr.map(c => {
+            let v = "-";
+            if(c === 'zone') v = z.nom;
+            else if(c === 'rang') v = r.numero;
+            else if(c === 'arrosages') v = (p.arrosages && p.arrosages.length > 0) ? p.arrosages.join(' | ') : "-";
+            else if(c === 'recolte') v = (p.recolte) ? p.recolte.join(', ') : "-";
+            else if(p[c]) v = p[c];
+            return `<td>${v}</td>`;
+        }).join('');
+        html += `<tr onclick="editerDirect(${p.id})">${rows}</tr>`;
+    })));
+    body.innerHTML = html;
 }
 
 function validerFormulaire() {
-    const id = document.getElementById('edit-id').value ? parseInt(document.getElementById('edit-id').value) : Date.now();
-    let oldP = null; monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(x => { if(x.id === id) oldP = x; })));
+    const idField = document.getElementById('edit-id').value;
+    const id = idField ? parseInt(idField) : Date.now();
+    let oldArrosages = [];
+    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(x => { if(x.id === id) oldArrosages = x.arrosages || []; })));
     let p = { 
         id: id, nom: document.getElementById('p_nom').value, typeInit: document.getElementById('p_init').value,
         date: document.getElementById('p_date').value, dateLevee: document.getElementById('p_date_levee').value,
         dateRecolte: document.getElementById('p_date_recolte').value, dateFin: document.getElementById('p_date_fin').value,
         notes: document.getElementById('p_notes').value, recolte: Array.from(document.querySelectorAll('input[name="mr"]:checked')).map(cb => cb.value),
-        arrosages: oldP ? (oldP.arrosages || []) : []
+        arrosages: oldArrosages
     };
     document.querySelectorAll('.custom-field-row').forEach(row => {
         let k = row.querySelector('.custom-key').value.trim(); const v = row.querySelector('.custom-val').value.trim();
@@ -416,18 +408,25 @@ function updateSidebar() {
 }
 
 function exportCSV() {
-    let clesFixes = ['id', 'nom', 'zone', 'rang', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'recolte', 'dateFin', 'notes', 'arrosages'];
-    let clesDyn = new Set(); monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => Object.keys(p).forEach(k => { if(!clesFixes.includes(k)) clesDyn.add(k); }))));
-    let colArr = [...clesFixes, ...Array.from(clesDyn)];
+    const clesFixes = ['id', 'nom', 'zone', 'rang', 'typeInit', 'date', 'dateLevee', 'dateRecolte', 'recolte', 'dateFin', 'notes', 'arrosages'];
+    let clesDyn = new Set();
+    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => { Object.keys(p).forEach(k => { if(!clesFixes.includes(k)) clesDyn.add(k); }); })));
+    const colArr = [...clesFixes, ...Array.from(clesDyn)];
     let csv = "\uFEFF" + colArr.join(";") + "\n";
     monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
-        let ligne = colArr.map(c => { 
-            let v = (c==='zone')?z.nom:(c==='rang')?r.numero:(c==='recolte' && p[c])?p[c].join(','):(c==='arrosages' && p[c])?p[c].join('|'):p[c]||"-"; 
-            return `"${String(v).replace(/"/g, '""')}"`; 
+        let ligne = colArr.map(c => {
+            let v = "-";
+            if(c === 'zone') v = z.nom;
+            else if(c === 'rang') v = r.numero;
+            else if(c === 'arrosages') v = (p.arrosages) ? p.arrosages.join('|') : "-";
+            else if(c === 'recolte') v = (p.recolte) ? p.recolte.join(',') : "-";
+            else if(p[c]) v = p[c];
+            return `"${String(v).replace(/"/g, '""')}"`;
         });
         csv += ligne.join(";") + "\n";
     })));
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "potager.csv"; link.click();
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "potager_v1_6_0001.csv"; link.click();
 }
 
 afficherPotager(); updateSidebar();
