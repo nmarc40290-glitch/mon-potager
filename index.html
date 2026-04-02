@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - v1.6.0020</title>
+    <title>Mon Potager - v1.6.0021</title>
     <link rel="manifest" href="manifest.json">
     <style>
         :root { 
@@ -91,7 +91,7 @@
 <body>
 <nav>
     <div class="nav-left" onclick="toggleSidebar()"><span style="font-weight:900; font-size: 1.1em;">☰ MENU POTAGER</span></div>
-    <div class="nav-version">v.1.6.0020</div>
+    <div class="nav-version">v.1.6.0021</div>
 </nav>
 <datalist id="list-custom-keys"></datalist>
 <button class="fab-add" onclick="ouvrirAjout()">+</button>
@@ -208,7 +208,7 @@ async function installerApp() {
         const { outcome } = await deferredPrompt.userChoice;
         if (outcome === 'accepted') deferredPrompt = null;
     } else {
-        alert("Installation : \n1. Cliquez sur les 3 points (Chrome)\n2. Sélectionnez 'Installer l'application'");
+        alert("Installation impossible : application déjà installée ou version système identique");
     }
 }
 
