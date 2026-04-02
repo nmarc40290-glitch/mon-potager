@@ -98,14 +98,14 @@
         <a class="cat-link nav-sidebar-item" onclick="switchTab('tab-pluie')" style="border-left-color: var(--rain);">🌧️ PLUVIOMÉTRIE</a>
         <a class="cat-link nav-sidebar-item" onclick="switchTab('tab-planning')">📅 VUE PLANNING</a>
         <a class="cat-link nav-sidebar-item" onclick="switchTab('tab-sql')">🗄️ TABLEAU SQL</a>
+       <button id="installBtn" class="btn-install" style="background:#ff9800; color:white; border:none; padding:12px; border-radius:8px; width:100%; font-weight:bold; margin-top:10px; cursor:pointer;" onclick="installerApp()">📲 INSTALLER L'APPLI</button>
         <a class="cat-link" style="font-weight:bold; background:var(--primary-light); margin-top: 10px;" onclick="filtrer('tout', null)">🔄 TOUT AFFICHER</a>
         <div id="sidebar-content"></div>
         <hr style="margin-top:30px; border:0; border-top:1px solid #eee;">
         <button class="btn-side-opt" onclick="exportJSON()">📤 EXPORTER JSON</button>
         <button class="btn-side-opt" onclick="exportCSV()">📊 EXPORTER CSV (Excel)</button>
         <button class="btn-side-opt" onclick="document.getElementById('fileInput').click()">📥 IMPORTER DATA</button>
-        <button id="installBtn" class="btn-install" style="background:#ff9800; color:white; border:none; padding:12px; border-radius:8px; width:100%; font-weight:bold; margin-top:10px; cursor:pointer;" onclick="installerApp()">📲 INSTALLER L'APPLI</button>
-       <input type="file" id="fileInput" style="display:none" onchange="importJSON(event)">
+            <input type="file" id="fileInput" style="display:none" onchange="importJSON(event)">
     </aside>
     <main class="content-area">
         <div id="tab-liste" class="section active"><div id="affichageDonnees"></div></div>
