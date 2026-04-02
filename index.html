@@ -87,7 +87,7 @@
 <body>
 <nav>
     <div class="nav-left" onclick="toggleSidebar()"><span style="font-weight:900; font-size: 1.1em;">☰ MENU POTAGER</span></div>
-    <div class="nav-version">v.1.6.0014</div>
+    <div class="nav-version">v.1.6.0019</div>
 </nav>
 <datalist id="list-custom-keys"></datalist>
 <button class="fab-add" onclick="ouvrirAjout()">+</button>
@@ -104,7 +104,8 @@
         <button class="btn-side-opt" onclick="exportJSON()">📤 EXPORTER JSON</button>
         <button class="btn-side-opt" onclick="exportCSV()">📊 EXPORTER CSV (Excel)</button>
         <button class="btn-side-opt" onclick="document.getElementById('fileInput').click()">📥 IMPORTER DATA</button>
-        <input type="file" id="fileInput" style="display:none" onchange="importJSON(event)">
+        <button id="installBtn" class="btn-install" style="background:#ff9800; color:white; border:none; padding:12px; border-radius:8px; width:100%; font-weight:bold; margin-top:10px; cursor:pointer;" onclick="installerApp()">📲 INSTALLER L'APPLI</button>
+       <input type="file" id="fileInput" style="display:none" onchange="importJSON(event)">
     </aside>
     <main class="content-area">
         <div id="tab-liste" class="section active"><div id="affichageDonnees"></div></div>
@@ -585,6 +586,28 @@ document.addEventListener('visibilitychange', () => {
 });
 
 afficherPotager(); updateSidebar();
+let deferredPrompt;
+
+// Écoute l'événement d'installation de Chrome
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+});
+
+async function installerApp() {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            deferredPrompt = null;
+        }
+    } else {
+        // Message de secours si le navigateur bloque l'installation auto
+        alert("Installation : \n1. Cliquez sur les 3 points (menu Chrome)\n2. Sélectionnez 'Installer l'application'");
+    }
+}
+   
+   
 </script>
 </body>
 </html>
