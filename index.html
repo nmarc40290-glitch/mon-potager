@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - v1.7.2</title>
+    <title>Mon Potager - v1.7.3</title>
     <link rel="manifest" href="manifest.json">
     <style>
         :root { 
@@ -92,7 +92,7 @@
 <body>
 <nav>
     <div class="nav-left" onclick="toggleSidebar()"><span style="font-weight:900; font-size: 1.1em;">☰ MENU POTAGER</span></div>
-    <div class="nav-version">v.1.7.2</div>
+    <div class="nav-version">v.1.7.3</div>
 </nav>
 <datalist id="list-custom-keys"></datalist>
 <button class="fab-add" onclick="ouvrirAjout()">+</button>
@@ -398,63 +398,82 @@ function afficherPotager() {
 }
 
 function afficherPlanning() {
-    const head = document.getElementById('plan-head');
-    const body = document.getElementById('plan-body');
-    head.innerHTML = "";
-    body.innerHTML = "";
+    // On utilise le conteneur principal comme dans la v0024
+    const container = document.getElementById('affichageDonnees');
+    container.innerHTML = "";
+    const planning = {};
 
-    // 1. Définition des mois (12 mois à partir de maintenant)
-    const moisAffiche = [];
-    let d = new Date();
-    d.setDate(1);
-    for (let i = 0; i < 12; i++) {
-        moisAffiche.push(new Date(d));
-        d.setMonth(d.getMonth() + 1);
-    }
-
-    // Entête du planning
-    let headHtml = `<tr><th class="sticky-col">Légume</th>`;
-    moisAffiche.forEach(m => {
-        headHtml += `<th class="month-header">${m.toLocaleString('fr-FR', {month: 'short'})} ${m.getFullYear()}</th>`;
-    });
-    head.innerHTML = headHtml + `</tr>`;
-
-    // 2. Filtrage et construction des lignes
-    let bodyHtml = "";
+    // 1. Collecte et filtrage des données
     monPotager.forEach(zone => {
         zone.rangs.forEach(rang => {
             rang.plantes.forEach(p => {
                 const info = getStatutInfo(p);
+                
+                // Application des filtres de la sidebar
                 const matchZone = filtreActuel.zones.length === 0 || filtreActuel.zones.includes(zone.nom);
                 const matchNom = filtreActuel.noms.length === 0 || filtreActuel.noms.includes(p.nom);
                 const matchStatut = filtreActuel.statuts.length === 0 || filtreActuel.statuts.includes(info.text);
 
                 if (matchZone && matchNom && matchStatut) {
-                    let row = `<tr><td class="sticky-col" onclick="editerDirect(${p.id})">${p.nom} <br><small>Z:${zone.nom} R:${rang.numero}</small></td>`;
-                    
-                    moisAffiche.forEach(mA => {
-                        const mStr = mA.toISOString().substring(0, 7);
-                        let cellContent = "";
-                        
-                        // Vérifier si un événement tombe dans ce mois
-                        if (p.date && p.date.startsWith(mStr)) cellContent += `<div class="c-sous-terre">Semis</div>`;
-                        if (p.dateLevee && p.dateLevee.startsWith(mStr)) cellContent += `<div class="c-violet">Levée</div>`;
-                        if (p.dateRecolte && p.dateRecolte.startsWith(mStr)) cellContent += `<div class="c-vert">Récolte</div>`;
-                        if (p.dateFin && p.dateFin.startsWith(mStr)) cellContent += `<div class="c-fini">Fin</div>`;
-                        
-                        // Prévisions (molette mois)
-                        if ((p.recolte || []).includes(MOIS_NOM[mA.getMonth()])) {
-                            cellContent += `<div class="c-prev">Prévu</div>`;
-                        }
+                    // Liste des dates clés à afficher dans le planning
+                    const dates = [
+                        { d: p.date, t: "Semis/Plantation", c: "p-semis" },
+                        { d: p.dateLevee, t: "Levée", c: "p-levee" },
+                        { d: p.dateRecolte, t: "Récolte", c: "p-recolte" },
+                        { d: p.dateFin, t: "Fin de culture", c: "p-fin" }
+                    ];
 
-                        row += `<td>${cellContent}</td>`;
+                    dates.forEach(dt => {
+                        if (dt.d) {
+                            const mois = dt.d.substring(0, 7); // Format "YYYY-MM"
+                            if (!planning[mois]) planning[mois] = [];
+                            planning[mois].push({ 
+                                ...dt, 
+                                nom: p.nom, 
+                                zone: zone.nom, 
+                                rang: rang.numero,
+                                id: p.id 
+                            });
+                        }
                     });
-                    bodyHtml += row + `</tr>`;
                 }
             });
         });
     });
-    body.innerHTML = bodyHtml;
+
+    // 2. Génération du HTML (Visuel v0024)
+    const moisTriés = Object.keys(planning).sort().reverse();
+
+    if (moisTriés.length === 0) {
+        container.innerHTML = "<div class='zone-box'><p style='text-align:center; padding:20px;'>Aucun événement ne correspond aux filtres.</p></div>";
+        return;
+    }
+
+    moisTriés.forEach(mois => {
+        const [y, m] = mois.split('-');
+        const nomMois = new Date(y, m - 1).toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
+        
+        let itemsHtml = "";
+        // Tri des événements par jour dans le mois
+        planning[mois].sort((a, b) => a.d.localeCompare(b.d)).forEach(ev => {
+            const jour = ev.d.split('-')[2];
+            itemsHtml += `
+                <div class="planning-item" onclick="editerDirect(${ev.id})">
+                    <span class="plan-date">${jour}</span>
+                    <span class="plan-dot ${ev.c}"></span>
+                    <div class="plan-info">
+                        <strong>${ev.nom}</strong><br>
+                        <small>${ev.t} - Zone ${ev.zone} (R${ev.rang})</small>
+                    </div>
+                </div>`;
+        });
+
+        container.innerHTML += `
+            <div class="zone-box">
+                <h2 style="text-transform: capitalize;">${nomMois}</h2>
+                ${itemsHtml}
+            </div>`;
+    });
 }
 
 function afficherTableauSQL() {
