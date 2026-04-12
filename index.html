@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - v1.7.2</title>
+    <title>Mon Potager - v1.7.6</title>
     <link rel="manifest" href="manifest.json">
     <style>
         :root { 
@@ -92,7 +92,7 @@
 <body>
 <nav>
     <div class="nav-left" onclick="toggleSidebar()"><span style="font-weight:900; font-size: 1.1em;">☰ MENU POTAGER</span></div>
-    <div class="nav-version">v.1.7.2</div>
+    <div class="nav-version">v.1.7.6</div>
 </nav>
 <datalist id="list-custom-keys"></datalist>
 <button class="fab-add" onclick="ouvrirAjout()">+</button>
@@ -412,13 +412,22 @@ function afficherPlanning() {
         d.setMonth(d.getMonth() + 1);
     }
 
-    // Entête du planning
-    let headHtml = `<tr><th class="sticky-col">Légume</th>`;
-    moisAffiche.forEach(m => {
-        headHtml += `<th class="month-header">${m.toLocaleString('fr-FR', {month: 'short'})} ${m.getFullYear()}</th>`;
-    });
-    head.innerHTML = headHtml + `</tr>`;
+let headHtml = `<tr><th class="sticky-col">Légume</th>`;
+moisAffiche.forEach(mA => {
+    const mStr = mA.toISOString().substring(0, 7); // Format "2024-05"
+    
+    // Calcul du cumul de pluie pour ce mois précis
+    const totalPluie = (donneesPluie || [])
+        .filter(r => r.date.startsWith(mStr))
+        .reduce((sum, r) => sum + parseFloat(r.mm || 0), 0);
 
+    headHtml += `
+        <th class="month-header">
+            ${mA.toLocaleString('fr-FR', {month: 'short'})} ${mA.getFullYear()}<br>
+            <span style="color:var(--rain); font-size:0.8em;">🌧️ ${totalPluie.toFixed(1)}mm</span>
+        </th>`;
+});
+head.innerHTML = headHtml + `</tr>`;
     // 2. Filtrage et construction des lignes
     let bodyHtml = "";
     monPotager.forEach(zone => {
