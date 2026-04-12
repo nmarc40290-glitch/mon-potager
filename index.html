@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - v1.6.0028</title>
+    <title>Mon Potager - v1.6.0029</title>
     <link rel="manifest" href="manifest.json">
     <style>
         :root { 
@@ -92,7 +92,7 @@
 <body>
 <nav>
     <div class="nav-left" onclick="toggleSidebar()"><span style="font-weight:900; font-size: 1.1em;">☰ MENU POTAGER</span></div>
-    <div class="nav-version">v.1.6.0028</div>
+    <div class="nav-version">v.1.6.0029</div>
 </nav>
 <datalist id="list-custom-keys"></datalist>
 <button class="fab-add" onclick="ouvrirAjout()">+</button>
@@ -184,7 +184,12 @@
 <script>
 let monPotager = JSON.parse(localStorage.getItem("data_potager")) || [];
 let pluviometrie = JSON.parse(localStorage.getItem("data_pluie")) || [];
-let filtreActuel = { type: 'tout', valeur: null };
+// On utilise maintenant des tableaux pour autoriser plusieurs sélections
+let filtreActuel = { 
+    zones: [], 
+    noms: [], 
+    statuts: [] 
+};
 const MOIS_NOM = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
 
 for(let i=1; i<=30; i++) { 
@@ -358,22 +363,20 @@ function afficherPotager() {
         let cards = "";
         zone.rangs.sort((a,b) => a.numero - b.numero).forEach((rang, ri) => {
             rang.plantes.forEach((p, pi) => {
-                // 1. On calcule le statut d'abord pour pouvoir filtrer dessus
                 const info = getStatutInfo(p);
                 
-                // 2. On ajoute la condition : filtreActuel.type === 'statut'
-                if (filtreActuel.type === 'tout' || 
-                    (filtreActuel.type === 'nom' && filtreActuel.valeur === p.nom) || 
-                    (filtreActuel.type === 'zone' && filtreActuel.valeur === zone.nom) ||
-                    (filtreActuel.type === 'statut' && filtreActuel.valeur === info.text)) {
-                    
+                // LOGIQUE DE FILTRE MULTIPLE :
+                // On affiche si la liste est vide (aucun filtre) OU si la valeur est dans la liste
+                const matchZone = filtreActuel.zones.length === 0 || filtreActuel.zones.includes(zone.nom);
+                const matchNom = filtreActuel.noms.length === 0 || filtreActuel.noms.includes(p.nom);
+                const matchStatut = filtreActuel.statuts.length === 0 || filtreActuel.statuts.includes(info.text);
+
+                if (matchZone && matchNom && matchStatut) {
                     const delay = getDelayInfo(p.arrosages);
                     let pluieHtml = (!p.abris && pluie7j > 0) ? `<span style="color:var(--rain); font-weight:bold; font-size:0.85em; margin-left:10px;">🌧️ 7j: ${pluie7j}mm</span>` : "";
                     let extraFields = "";
                     const exclude = ['id', 'nom', 'typeInit', 'abris', 'date', 'dateLevee', 'dateRecolte', 'dateFin', 'notes', 'recolte', 'statut', 'arrosages'];
-                    
                     Object.keys(p).forEach(k => { if(!exclude.includes(k)) extraFields += `<span class="card-tag"><b>${k}:</b> ${p[k]}</span>`; });
-                    
                     let noteHtml = p.notes ? `<span class="card-note">📝 ${p.notes}</span>` : "";
                     let abrisIcon = p.abris ? "🏠 " : "";
                     
@@ -544,7 +547,31 @@ function save() {
     localStorage.setItem("data_pluie", JSON.stringify(pluviometrie));
 }
 
-function filtrer(t, v) { filtreActuel = { type: t, valeur: v }; toggleSidebar(); afficherPotager(); }
+function filtrer(type, valeur) {
+    // Gestion du bouton "Tout afficher"
+    if (type === 'tout') {
+        filtreActuel = { zones: [], noms: [], statuts: [] };
+    } else {
+        // Déterminer quelle liste modifier
+        let liste = [];
+        if (type === 'zone') liste = filtreActuel.zones;
+        else if (type === 'nom') liste = filtreActuel.noms;
+        else if (type === 'statut') liste = filtreActuel.statuts;
+
+        // Si la valeur y est déjà, on l'enlève, sinon on l'ajoute
+        const index = liste.indexOf(valeur);
+        if (index > -1) {
+            liste.splice(index, 1);
+        } else {
+            liste.push(valeur);
+        }
+    }
+    
+    // On ne ferme plus la sidebar automatiquement pour permettre de cocher plusieurs trucs
+    // toggleSidebar(); // Ligne commentée pour le confort
+    updateSidebar();
+    afficherPotager();
+}
 function supprimerFiche() { if(confirm("Supprimer ?")) { const id = parseInt(document.getElementById('edit-id').value); monPotager.forEach(z => z.rangs.forEach(r => r.plantes = r.plantes.filter(p => p.id !== id))); save(); switchTab('tab-liste'); } }
 
 function addCustomField(key = "", value = "") {
@@ -640,38 +667,37 @@ function exportCSV() {
 function updateSidebar() {
     const zones = new Set();
     const plantes = new Set();
-    const statuts = new Set(); // Nouveau set pour les statuts
+    const statuts = new Set();
 
-    // Parcours des données pour extraire les infos
     monPotager.forEach(z => { 
         zones.add(z.nom); 
         z.rangs.forEach(r => r.plantes.forEach(p => {
             plantes.add(p.nom);
-            // On récupère le texte du statut via votre fonction existante
-            statuts.add(getStatutInfo(p).text); 
+            statuts.add(getStatutInfo(p).text);
         })); 
     });
 
     const container = document.getElementById('sidebar-content'); 
     container.innerHTML = "";
 
-    const build = (titre, items, type, id) => {
-        let html = `<div class="sidebar-header" onclick="document.getElementById('${id}').classList.toggle('hidden')"><span>${titre}</span> ▾</div><div id="${id}" class="cat-content hidden">`;
+    const build = (titre, items, type, id, activeList) => {
+        let html = `<div class="sidebar-header" onclick="document.getElementById('${id}').classList.toggle('hidden')"><span>${titre}</span> ▾</div><div id="${id}" class="cat-content">`;
+        
         Array.from(items).sort().forEach(v => {
-            // Mise en gras si le filtre est actif
-            const isSelected = (filtreActuel.type === type && filtreActuel.valeur === v);
-            const style = isSelected ? "font-weight:bold; background:#e8f5e9;" : "";
-            html += `<a class="cat-link" style="${style}" onclick="filtrer('${type}', '${v}')">${v}</a>`;
+            const isActive = activeList.includes(v);
+            const decoration = isActive ? "✅ " : "";
+            const style = isActive ? "background:var(--primary-light); font-weight:bold; color:var(--primary);" : "";
+            
+            html += `<a class="cat-link" style="${style}" onclick="filtrer('${type}', '${v}')">${decoration}${v}</a>`;
         });
         container.innerHTML += html + `</div>`;
     };
 
-    // Affichage des sections
-    build("ZONES", zones, 'zone', 'side-z'); 
-    build("LÉGUMES", plantes, 'nom', 'side-l');
-    // Ajout de la section Statuts en dessous
-    build("STATUTS", statuts, 'statut', 'side-s'); 
+    build("ZONES", zones, 'zone', 'side-z', filtreActuel.zones); 
+    build("LÉGUMES", plantes, 'nom', 'side-l', filtreActuel.noms);
+    build("STATUTS", statuts, 'statut', 'side-s', filtreActuel.statuts);
 }
+
 
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').then(reg => {
