@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - v1.6.0030</title>
+    <title>Mon Potager - v1.7.1</title>
     <link rel="manifest" href="manifest.json">
     <style>
         :root { 
@@ -92,7 +92,7 @@
 <body>
 <nav>
     <div class="nav-left" onclick="toggleSidebar()"><span style="font-weight:900; font-size: 1.1em;">☰ MENU POTAGER</span></div>
-    <div class="nav-version">v.1.6.0030</div>
+    <div class="nav-version">v.1.7.1</div>
 </nav>
 <datalist id="list-custom-keys"></datalist>
 <button class="fab-add" onclick="ouvrirAjout()">+</button>
@@ -398,73 +398,57 @@ function afficherPotager() {
 }
 
 function afficherPlanning() {
-    const head = document.getElementById('plan-head'); const body = document.getElementById('plan-body');
-    const today = new Date(); today.setHours(0,0,0,0);
-    const pluie7j = getPluie7Jours();
-    
-    let toutesPlantes = []; let dateMin = new Date(today.getFullYear(), 0, 1);
-    monPotager.forEach(z => z.rangs.forEach(r => r.plantes.forEach(p => {
-        toutesPlantes.push({...p, zoneNom: z.nom, rangNum: r.numero});
-        if (p.date) { const d = new Date(p.date); if (d < dateMin) dateMin = new Date(d.getFullYear(), d.getMonth(), 1); }
-    })));
-    toutesPlantes.sort((a, b) => a.zoneNom.localeCompare(b.zoneNom) || a.rangNum - b.rangNum);
-    let moisAffiche = []; let curDate = new Date(dateMin); let endDate = new Date(today.getFullYear() + 1, 11, 31);
-    while (curDate <= endDate) {
-        moisAffiche.push({ m: curDate.getMonth(), y: curDate.getFullYear(), label: MOIS_NOM[curDate.getMonth()] + " " + String(curDate.getFullYear()).slice(-2) });
-        curDate.setMonth(curDate.getMonth() + 1);
-    }
-    head.innerHTML = `<tr><th class="sticky-col">Plante (Zone-Rang)</th>${moisAffiche.map(ma => `<th class="month-header">${ma.label}</th>`).join('')}</tr>`;
-    
-    let rainRow = `<tr class="row-rain-total"><td class="sticky-col">🌧️ CUMUL PLUIE (mm)</td>`;
-    moisAffiche.forEach(ma => {
-        let totalMm = pluviometrie.filter(p => { let d = new Date(p.date); return d.getMonth() === ma.m && d.getFullYear() === ma.y; }).reduce((sum, p) => sum + p.mm, 0);
-        rainRow += `<td>${totalMm > 0 ? totalMm + ' mm' : '-'}</td>`;
-    });
-    body.innerHTML = rainRow + `</tr>`;
+    const container = document.getElementById('affichageDonnees');
+    container.innerHTML = "";
+    const planning = {};
 
-    body.innerHTML += toutesPlantes.map(p => {
-        const dStart = p.date ? new Date(p.date) : null;
-        const dLevee = p.dateLevee ? new Date(p.dateLevee) : null;
-        const dRec = p.dateRecolte ? new Date(p.dateRecolte) : null;
-        const dFin = p.dateFin ? new Date(p.dateFin) : null;
-        const delay = getDelayInfo(p.arrosages); 
-        let pluie7jHtml = (!p.abris && pluie7j > 0) ? `<br><span style="color:var(--rain); font-size:0.9em;">🌧️ 7j: ${pluie7j}mm</span>` : "";
+    monPotager.forEach(zone => {
+        zone.rangs.forEach(rang => {
+            rang.plantes.forEach(p => {
+                // --- LOGIQUE DE FILTRE ---
+                const info = getStatutInfo(p);
+                const matchZone = filtreActuel.zones.length === 0 || filtreActuel.zones.includes(zone.nom);
+                const matchNom = filtreActuel.noms.length === 0 || filtreActuel.noms.includes(p.nom);
+                const matchStatut = filtreActuel.statuts.length === 0 || filtreActuel.statuts.includes(info.text);
 
-        let cells = moisAffiche.map(ma => {
-            const mStart = new Date(ma.y, ma.m, 1); const mEnd = new Date(ma.y, ma.m + 1, 0);
-            let content = ""; let className = "";
-            let countGouttes = (p.arrosages || []).filter(dateStr => {
-                let d = new Date(dateStr);
-                return d.getMonth() === ma.m && d.getFullYear() === ma.y;
-            }).length;
-            
-            let totalMmPluie = pluviometrie.filter(pl => { let d = new Date(pl.date); return d.getMonth() === ma.m && d.getFullYear() === ma.y; }).reduce((sum, pl) => sum + pl.mm, 0);
-            let rainHtml = (!p.abris && totalMmPluie > 0) ? `<div class="rain-info">🌧️ ${totalMmPluie}mm</div>` : "";
-            let gouttesHtml = countGouttes > 0 ? `<div class="drop-container">${"💧".repeat(countGouttes)}</div>` : "";
-            
-            if (dStart && mEnd < new Date(dStart.getFullYear(), dStart.getMonth(), 1)) return `<td>${gouttesHtml}${rainHtml}</td>`;
-            if (dFin) { if (ma.m === dFin.getMonth() && ma.y === dFin.getFullYear()) { content = "Arraché"; className = "c-fini"; } else if (mStart > dFin) return `<td>${gouttesHtml}${rainHtml}</td>`; }
-            if (!content) {
-                if (mEnd < today) {
-                    if (dRec && dRec <= mEnd) { content = "Récolte"; className = "c-vert"; }
-                    else if (p.typeInit === 'semis') { if (dLevee && dLevee <= mEnd) { content = "Levé"; className = "c-violet"; } else if (dStart && dStart <= mEnd) { content = "ST"; className = "c-sous-terre"; } }
-                    else if (dStart && dStart <= mEnd) { content = "Planté"; className = "c-violet"; }
-                } else if (mStart <= today && mEnd >= today) {
-                    const info = getStatutInfo(p);
-                    if (info.text === "Fini") { content = "Arraché"; className = "c-fini"; } else if (info.text === "Récolte") { content = "Récolte"; className = "c-vert"; }
-                    else if (info.text === "Levé" || info.text === "Planté") { content = info.text; className = "c-violet"; } else if (info.text === "Sous terre") { content = "ST"; className = "c-sous-terre"; }
+                // On ne traite la plante que si elle passe les filtres
+                if (matchZone && matchNom && matchStatut) {
+                    const dates = [
+                        { d: p.date, t: "Semis/Plantation", c: "p-semis" },
+                        { d: p.dateLevee, t: "Levée", c: "p-levee" },
+                        { d: p.dateRecolte, t: "Récolte", c: "p-recolte" },
+                        { d: p.dateFin, t: "Fin", c: "p-fin" }
+                    ];
+                    dates.forEach(dt => {
+                        if (dt.d) {
+                            const mois = dt.d.substring(0, 7);
+                            if (!planning[mois]) planning[mois] = [];
+                            planning[mois].push({ ...dt, nom: p.nom, zone: zone.nom, id: p.id });
+                        }
+                    });
                 }
-            }
-            if (content !== "Récolte" && content !== "Arraché" && (p.recolte || []).includes(MOIS_NOM[ma.m])) { 
-                className = content ? "c-prev-act" : "c-prev"; 
-                content = content ? "Prév.+" + content : "Prév."; 
-            }
-            return `<td class="${className}" style="position:relative;">${content}${gouttesHtml}${rainHtml}</td>`;
-        }).join('');
-        
-        let abrisIcon = p.abris ? "🏠 " : "";
-        return `<tr><td class="sticky-col">${abrisIcon}${p.nom} <br><small>Z:${p.zoneNom} R:${p.rangNum}</small><br><span class="delay-tag ${delay.class}" style="display:inline-block;">💧 ${delay.label}</span>${pluie7jHtml}</td>${cells}</tr>`;
-    }).join('');
+            });
+        });
+    });
+
+    // Rendu du HTML (le reste du code est identique)
+    Object.keys(planning).sort().reverse().forEach(mois => {
+        const [y, m] = mois.split('-');
+        const nomMois = new Date(y, m - 1).toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
+        let items = "";
+        planning[mois].sort((a, b) => a.d.localeCompare(b.d)).forEach(ev => {
+            items += `
+                <div class="planning-item" onclick="editerDirect(${ev.id})">
+                    <span class="plan-date">${ev.d.split('-')[2]}</span>
+                    <span class="plan-dot ${ev.c}"></span>
+                    <div class="plan-info">
+                        <strong>${ev.nom}</strong><br>
+                        <small>${ev.t} - Zone ${ev.zone}</small>
+                    </div>
+                </div>`;
+        });
+        container.innerHTML += `<div class="zone-box"><h2>${nomMois.toUpperCase()}</h2>${items}</div>`;
+    });
 }
 
 function afficherTableauSQL() {
@@ -548,17 +532,14 @@ function save() {
 }
 
 function filtrer(type, valeur) {
-    // Gestion du bouton "Tout afficher"
     if (type === 'tout') {
         filtreActuel = { zones: [], noms: [], statuts: [] };
     } else {
-        // Déterminer quelle liste modifier
         let liste = [];
         if (type === 'zone') liste = filtreActuel.zones;
         else if (type === 'nom') liste = filtreActuel.noms;
         else if (type === 'statut') liste = filtreActuel.statuts;
 
-        // Si la valeur y est déjà, on l'enlève, sinon on l'ajoute
         const index = liste.indexOf(valeur);
         if (index > -1) {
             liste.splice(index, 1);
@@ -567,11 +548,19 @@ function filtrer(type, valeur) {
         }
     }
     
-    // On ne ferme plus la sidebar automatiquement pour permettre de cocher plusieurs trucs
-    // toggleSidebar(); // Ligne commentée pour le confort
     updateSidebar();
-    afficherPotager();
+
+    // DÉTECTION DE LA VUE ACTIVE
+    // On regarde le titre affiché dans la barre de navigation
+    const titreActuel = document.getElementById('view-title').innerText;
+    
+    if (titreActuel === "PLANNING") {
+        afficherPlanning();
+    } else {
+        afficherPotager();
+    }
 }
+
 function supprimerFiche() { if(confirm("Supprimer ?")) { const id = parseInt(document.getElementById('edit-id').value); monPotager.forEach(z => z.rangs.forEach(r => r.plantes = r.plantes.filter(p => p.id !== id))); save(); switchTab('tab-liste'); } }
 
 function addCustomField(key = "", value = "") {
