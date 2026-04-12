@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mon Potager - v1.6.0029</title>
+    <title>Mon Potager - v1.6.0030</title>
     <link rel="manifest" href="manifest.json">
     <style>
         :root { 
@@ -92,7 +92,7 @@
 <body>
 <nav>
     <div class="nav-left" onclick="toggleSidebar()"><span style="font-weight:900; font-size: 1.1em;">☰ MENU POTAGER</span></div>
-    <div class="nav-version">v.1.6.0029</div>
+    <div class="nav-version">v.1.6.0030</div>
 </nav>
 <datalist id="list-custom-keys"></datalist>
 <button class="fab-add" onclick="ouvrirAjout()">+</button>
@@ -663,7 +663,6 @@ function exportCSV() {
 }
 
     
-
 function updateSidebar() {
     const zones = new Set();
     const plantes = new Set();
@@ -681,7 +680,12 @@ function updateSidebar() {
     container.innerHTML = "";
 
     const build = (titre, items, type, id, activeList) => {
-        let html = `<div class="sidebar-header" onclick="document.getElementById('${id}').classList.toggle('hidden')"><span>${titre}</span> ▾</div><div id="${id}" class="cat-content">`;
+        // AJOUT DE LA CLASSE 'hidden' ci-dessous pour que le menu soit réduit par défaut
+        let html = `
+            <div class="sidebar-header" onclick="document.getElementById('${id}').classList.toggle('hidden')">
+                <span>${titre}</span> ▾
+            </div>
+            <div id="${id}" class="cat-content hidden">`; // <--- 'hidden' ajouté ici
         
         Array.from(items).sort().forEach(v => {
             const isActive = activeList.includes(v);
